@@ -248,7 +248,7 @@ class TestConstraints:
                 )
 
     def test_set_entries_weight_check_lower(self, app):
-        """set_entries table rejects weight < 0.5."""
+        """set_entries table rejects weight < 0 (negative)."""
         with app.app_context():
             db = get_db()
             db.execute(
@@ -258,7 +258,7 @@ class TestConstraints:
             with pytest.raises(sqlite3.IntegrityError):
                 db.execute(
                     "INSERT INTO set_entries (session_id, exercise_name, set_number, weight, reps) "
-                    "VALUES (1, 'Bench Press', 1, 0.4, 8)"
+                    "VALUES (1, 'Bench Press', 1, -1, 8)"
                 )
 
     def test_set_entries_weight_check_upper(self, app):
@@ -276,7 +276,7 @@ class TestConstraints:
                 )
 
     def test_set_entries_reps_check_lower(self, app):
-        """set_entries table rejects reps < 1."""
+        """set_entries table rejects reps < 0 (negative)."""
         with app.app_context():
             db = get_db()
             db.execute(
@@ -286,7 +286,7 @@ class TestConstraints:
             with pytest.raises(sqlite3.IntegrityError):
                 db.execute(
                     "INSERT INTO set_entries (session_id, exercise_name, set_number, weight, reps) "
-                    "VALUES (1, 'Bench Press', 1, 50.0, 0)"
+                    "VALUES (1, 'Bench Press', 1, 50.0, -1)"
                 )
 
     def test_set_entries_reps_check_upper(self, app):

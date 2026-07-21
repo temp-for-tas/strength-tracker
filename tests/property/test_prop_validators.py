@@ -49,10 +49,10 @@ def test_weight_valid_one_decimal_accepted(integer_part, decimal_digit):
 
 @settings(max_examples=200)
 @given(
-    value=st.floats(max_value=0.49, allow_nan=False, allow_infinity=False),
+    value=st.floats(max_value=-0.01, allow_nan=False, allow_infinity=False),
 )
 def test_weight_below_minimum_rejected(value):
-    """Weights below 0.5 are rejected."""
+    """Negative weights are rejected (minimum is 0)."""
     is_valid, parsed, err = validate_weight(value)
     assert is_valid is False
     assert parsed is None
@@ -145,10 +145,10 @@ def test_reps_valid_string_integers_accepted(reps):
 
 @settings(max_examples=200)
 @given(
-    value=st.integers(max_value=0),
+    value=st.integers(max_value=-1),
 )
 def test_reps_below_minimum_rejected(value):
-    """Reps below 1 are rejected."""
+    """Negative reps are rejected (minimum is 0)."""
     is_valid, parsed, err = validate_reps(value)
     assert is_valid is False
     assert parsed is None

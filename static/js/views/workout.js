@@ -31,6 +31,9 @@ window.views['workout'] = {
                 api.loadState()
             ]);
 
+            // Persist the current week so the Days tab returns here
+            api.setCurrentWeek(week);
+
             this.state.exercises = exerciseData.exercises || [];
             this.initState(this.state.exercises);
 
@@ -115,7 +118,7 @@ window.views['workout'] = {
                 html += `<span class="set-label">${s}</span>`;
                 html += `<div class="input-group">`;
                 html += `<label for="weight-${idx}-${s}">Weight</label>`;
-                html += `<input type="number" id="weight-${idx}-${s}" step="0.5" min="0.5" max="9999" 
+                html += `<input type="number" id="weight-${idx}-${s}" step="0.5" min="0" max="9999" 
                     placeholder="${prevSet ? prevSet.weight : ''}" 
                     value="${this.escapeAttr(currentWeight)}"
                     data-exercise="${this.escapeAttr(name)}" data-set="${s}" data-field="weight"
@@ -124,7 +127,7 @@ window.views['workout'] = {
                 html += `</div>`;
                 html += `<div class="input-group">`;
                 html += `<label for="reps-${idx}-${s}">Reps</label>`;
-                html += `<input type="number" id="reps-${idx}-${s}" step="1" min="1" max="999" 
+                html += `<input type="number" id="reps-${idx}-${s}" step="1" min="0" max="999" 
                     placeholder="${prevSet ? prevSet.reps : ''}" 
                     value="${this.escapeAttr(currentReps)}"
                     data-exercise="${this.escapeAttr(name)}" data-set="${s}" data-field="reps"
@@ -360,7 +363,7 @@ window.views['workout'] = {
             if (prevSet) {
                 html += `<div class="previous-perf-set">`;
                 html += `<span>Set ${s}:</span>`;
-                html += `<span>${prevSet.weight}kg &times; ${prevSet.reps}</span>`;
+                html += `<span>${prevSet.weight} lb &times; ${prevSet.reps}</span>`;
                 html += `</div>`;
             }
         }
@@ -476,14 +479,14 @@ window.views['workout'] = {
         // Check if it's a valid number
         if (isNaN(num) || value === '') {
             input.classList.add('error');
-            if (errorEl) errorEl.textContent = 'Weight must be a number between 0.5 and 9999';
+            if (errorEl) errorEl.textContent = 'Weight must be a number between 0 and 9999';
             return false;
         }
 
-        // Check range
-        if (num < 0.5 || num > 9999) {
+        // Check range (0 is allowed for bodyweight exercises)
+        if (num < 0 || num > 9999) {
             input.classList.add('error');
-            if (errorEl) errorEl.textContent = 'Weight must be between 0.5 and 9999';
+            if (errorEl) errorEl.textContent = 'Weight must be between 0 and 9999';
             return false;
         }
 
@@ -506,21 +509,21 @@ window.views['workout'] = {
         // Check if it's a valid integer
         if (isNaN(num) || value.includes('.') || value.includes(',')) {
             input.classList.add('error');
-            if (errorEl) errorEl.textContent = 'Reps must be a whole number between 1 and 999';
+            if (errorEl) errorEl.textContent = 'Reps must be a whole number between 0 and 999';
             return false;
         }
 
         // Check it matches integer pattern
         if (num.toString() !== value) {
             input.classList.add('error');
-            if (errorEl) errorEl.textContent = 'Reps must be a whole number between 1 and 999';
+            if (errorEl) errorEl.textContent = 'Reps must be a whole number between 0 and 999';
             return false;
         }
 
-        // Check range
-        if (num < 1 || num > 999) {
+        // Check range (0 is allowed — means skipped set)
+        if (num < 0 || num > 999) {
             input.classList.add('error');
-            if (errorEl) errorEl.textContent = 'Reps must be between 1 and 999';
+            if (errorEl) errorEl.textContent = 'Reps must be between 0 and 999';
             return false;
         }
 
@@ -538,16 +541,17 @@ window.views['workout'] = {
         return false;
     },
 
-    // Utility: get all entered sets as array for save (used by task 7.2)
+    // Utility: get all entered sets as array for save
+    // A set is "entered" if reps is filled in. Weight is optional (blank → 0).
     getEnteredSets() {
         const sets = [];
         for (const [exerciseName, setData] of Object.entries(this.state.sets)) {
             for (const [setNum, values] of Object.entries(setData)) {
-                if (values.weight !== '' && values.reps !== '') {
+                if (values.reps !== '') {
                     sets.push({
                         exercise_name: exerciseName,
                         set_number: parseInt(setNum),
-                        weight: parseFloat(values.weight),
+                        weight: values.weight !== '' ? parseFloat(values.weight) : 0,
                         reps: parseInt(values.reps)
                     });
                 }

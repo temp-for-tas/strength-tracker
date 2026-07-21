@@ -125,13 +125,15 @@ window.views['history-detail'] = {
             </div>
         `;
 
-        const exerciseNames = Object.keys(exercises);
+        // Use exercise_order from API if available, otherwise fall back to Object.keys
+        const exerciseNames = session.exercise_order || Object.keys(exercises);
 
         if (exerciseNames.length === 0) {
             html += '<div class="empty-state"><p>No exercises recorded in this session.</p></div>';
         } else {
             exerciseNames.forEach(name => {
                 const exercise = exercises[name];
+                if (!exercise) return; // Skip exercises with no recorded data
                 const sets = exercise.sets || [];
                 const note = exercise.note || '';
 
@@ -145,7 +147,7 @@ window.views['history-detail'] = {
                             <div class="set-row">
                                 <span class="set-label">${set.set_number}</span>
                                 <div class="input-group">
-                                    <span>${set.weight} kg</span>
+                                    <span>${set.weight} lb</span>
                                 </div>
                                 <div class="input-group">
                                     <span>${set.reps} reps</span>
