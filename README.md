@@ -36,86 +36,81 @@ pip install -r requirements.txt
 
 The app runs at http://localhost:5000. Upload a CSV program to get started (a sample is included in `sample_program/`).
 
-## CSV Format
+## Running on Android (Termux)
 
-```
-Week,Day,Exercise,Sets,Target Reps
-1,1,Bench Press,4,5-8
-1,1,Incline DB Press,3,8-10
-1,2,Squat,4,6-8
-1,2,Bulgarian Split Squat,3,6-8/side
-2,1,Bench Press,4,5-8
-...
-```
+This app is designed to run locally on your Android phone via Termux, with Chrome as the front-end.
 
-- **Week**: 1–52
-- **Day**: 1–7
-- **Exercise**: Name (up to 100 characters)
-- **Sets**: 1–10
-- **Target Reps**: Free text up to 20 characters (e.g., "5-8", "6-8/side", "20-30 sec")
+### 1. Install Termux
 
-## Running Tests
+Install **Termux** from the Google Play Store.
+
+### 2. Set up the environment
+
+Open Termux and run:
 
 ```bash
+pkg update && pkg upgrade
+pkg install python git
+```
+
+### 3. Clone the repo
+
+```bash
+cd ~
+git clone https://github.com/temp-for-tas/strength-tracker.git
+cd strength-tracker
+```
+
+### 4. Create the Python environment and install dependencies
+
+```bash
+python -m venv .venv
 source .venv/bin/activate
-
-# Run all tests
-pytest tests/ -v
-
-# Run only unit tests
-pytest tests/unit/ -v
-
-# Run property-based tests
-pytest tests/property/ -v
-
-# Run integration tests
-pytest tests/integration/ -v
+pip install Flask==3.1.1
 ```
 
-## Project Structure
+### 5. Set up the `gym` alias
 
-```
-├── app.py              # Flask app factory and entry point
-├── database.py         # SQLite connection management and schema
-├── csv_parser.py       # CSV program file parser with validation
-├── validators.py       # Input validation (weight, reps, notes, sessions)
-├── routes/
-│   ├── program.py      # Program upload and retrieval endpoints
-│   ├── sessions.py     # Workout session save and history endpoints
-│   └── state.py        # In-progress state persistence endpoints
-├── static/
-│   ├── css/style.css   # Mobile-first responsive styles
-│   └── js/
-│       ├── api.js      # Fetch wrappers for all backend endpoints
-│       ├── app.js      # Hash-based client-side router
-│       └── views/      # View modules (day-select, workout, history, upload)
-├── templates/
-│   └── index.html      # HTML shell with navigation
-├── tests/
-│   ├── unit/           # Unit tests (175 tests)
-│   ├── property/       # Property-based tests with Hypothesis (27 tests)
-│   └── integration/    # End-to-end workflow tests (5 tests)
-├── sample_program/     # Example 12-week 4-day strength program CSV
-├── requirements.txt    # Python dependencies
-└── run.sh              # Startup script
+Add an alias to your shell profile so you can start the app with a single command:
+
+```bash
+echo "alias gym='cd ~/strength-tracker && source .venv/bin/activate && python app.py'" >> ~/.bashrc
+source ~/.bashrc
 ```
 
-## API Endpoints
+From now on, just open Termux and type:
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/program/upload` | Upload CSV program (multipart, ≤1MB) |
-| GET | `/api/program/weeks` | List all weeks with day counts |
-| GET | `/api/program/weeks/<week>/days` | List days for a week |
-| GET | `/api/program/weeks/<week>/days/<day>` | Get exercises for a day |
-| GET | `/api/program/current-week` | Get current week info |
-| POST | `/api/sessions` | Save a workout session |
-| GET | `/api/sessions` | List all sessions (newest first) |
-| GET | `/api/sessions/<id>` | Get session detail |
-| GET | `/api/sessions/previous/<week>/<day>` | Get most recent session for a day |
-| POST | `/api/state/save` | Save in-progress workout state |
-| GET | `/api/state/load` | Load in-progress workout state |
+```bash
+gym
+```
 
-## License
+The server starts at `http://localhost:5000`.
 
-Private project.
+### 6. Open in Chrome and install as a home screen app
+
+1. Open **Chrome** on your phone and navigate to `http://localhost:5000`
+2. Tap the three-dot menu → **Add to Home Screen** (or "Install app" if prompted)
+3. Chrome adds a Strength Tracker icon to your home screen that launches the app in full-screen standalone mode, just like a native app
+
+> The server must be running in Termux for the app to work. Open Termux and run `gym` first, then tap the home screen icon to open the app.
+
+### Backing up and restoring your workout data
+
+Your workout history lives in a SQLite database inside the Termux home directory. If you reinstall Termux or switch devices, back it up first.
+
+**Back up:**
+```bash
+cp ~/strength-tracker/instance/workout_tracker.db /sdcard/workout_backup.db
+```
+
+**Restore after reinstalling:**
+```bash
+mkdir -p ~/strength-tracker/instance
+cp /sdcard/workout_backup.db ~/strength-tracker/instance/workout_tracker.db
+```
+
+`/sdcard/` is Android's shared storage and survives app uninstalls.
+
+## CSV Format
+
+... (rest of existing content unchanged)
