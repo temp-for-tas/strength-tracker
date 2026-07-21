@@ -1,0 +1,567 @@
+{
+  "pbtResults": {
+    "2.3 Write property tests for CSV parsing (Properties 8, 9, 11)": {
+      "status": "passed",
+      "lastRunTimestamp": 1784601603989
+    },
+    "4.2 Write property tests for validators (Properties 2, 3, 4)": {
+      "status": "passed",
+      "lastRunTimestamp": 1784601608352
+    },
+    "4.3 Write property tests for sessions (Properties 5, 6, 7)": {
+      "status": "passed",
+      "lastRunTimestamp": 1784603490970
+    },
+    "9.2 Write property test for in-progress state persistence (Property 12)": {
+      "status": "passed",
+      "lastRunTimestamp": 1784604544091
+    },
+    "10.1 Write property test for exercise retrieval (Property 1)": {
+      "status": "passed",
+      "lastRunTimestamp": 1784604558796
+    },
+    "10.2 Write property test for program re-upload preserving history (Property 10)": {
+      "status": "passed",
+      "lastRunTimestamp": 1784604653534
+    }
+  },
+  "executionHistory": {
+    "1.1 Create project directory structure and Python virtual environment": [
+      {
+        "executionId": "89ead6c9-ab3d-40d3-b874-027ff432acd2",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784599974551
+      },
+      {
+        "executionId": "89ead6c9-ab3d-40d3-b874-027ff432acd2",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784599982518
+      },
+      {
+        "executionId": "89ead6c9-ab3d-40d3-b874-027ff432acd2",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784600810022
+      }
+    ],
+    "1.2 Create the database module and schema initialization": [
+      {
+        "executionId": "89ead6c9-ab3d-40d3-b874-027ff432acd2",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784599974665
+      },
+      {
+        "executionId": "89ead6c9-ab3d-40d3-b874-027ff432acd2",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784600813709
+      },
+      {
+        "executionId": "89ead6c9-ab3d-40d3-b874-027ff432acd2",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784601186176
+      }
+    ],
+    "1.3 Create input validators module": [
+      {
+        "executionId": "89ead6c9-ab3d-40d3-b874-027ff432acd2",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784599974708
+      },
+      {
+        "executionId": "89ead6c9-ab3d-40d3-b874-027ff432acd2",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784600814436
+      },
+      {
+        "executionId": "89ead6c9-ab3d-40d3-b874-027ff432acd2",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784601187022
+      }
+    ],
+    "2.1 Create the CSV parser module": [
+      {
+        "executionId": "89ead6c9-ab3d-40d3-b874-027ff432acd2",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784599974745
+      },
+      {
+        "executionId": "89ead6c9-ab3d-40d3-b874-027ff432acd2",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784601191378
+      },
+      {
+        "executionId": "89ead6c9-ab3d-40d3-b874-027ff432acd2",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784601482847
+      }
+    ],
+    "2.2 Create program routes for upload and retrieval": [
+      {
+        "executionId": "89ead6c9-ab3d-40d3-b874-027ff432acd2",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784599974798
+      },
+      {
+        "executionId": "89ead6c9-ab3d-40d3-b874-027ff432acd2",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784601487794
+      },
+      {
+        "executionId": "89ead6c9-ab3d-40d3-b874-027ff432acd2",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784601753136
+      }
+    ],
+    "2.3 Write property tests for CSV parsing (Properties 8, 9, 11)": [
+      {
+        "executionId": "89ead6c9-ab3d-40d3-b874-027ff432acd2",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784599974835
+      },
+      {
+        "executionId": "89ead6c9-ab3d-40d3-b874-027ff432acd2",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784601488516
+      },
+      {
+        "executionId": "89ead6c9-ab3d-40d3-b874-027ff432acd2",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784601753959
+      }
+    ],
+    "2.4 Write unit tests for CSV parser and program routes": [
+      {
+        "executionId": "89ead6c9-ab3d-40d3-b874-027ff432acd2",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784599974875
+      },
+      {
+        "executionId": "89ead6c9-ab3d-40d3-b874-027ff432acd2",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784601489235
+      },
+      {
+        "executionId": "89ead6c9-ab3d-40d3-b874-027ff432acd2",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784601754780
+      }
+    ],
+    "3. Checkpoint - Core data layer verified": [
+      {
+        "executionId": "89ead6c9-ab3d-40d3-b874-027ff432acd2",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784599974910
+      },
+      {
+        "executionId": "89ead6c9-ab3d-40d3-b874-027ff432acd2",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784601764424
+      },
+      {
+        "executionId": "89ead6c9-ab3d-40d3-b874-027ff432acd2",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784601770708
+      }
+    ],
+    "4.1 Create session routes for save and retrieval": [
+      {
+        "executionId": "89ead6c9-ab3d-40d3-b874-027ff432acd2",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784599974945
+      },
+      {
+        "executionId": "89ead6c9-ab3d-40d3-b874-027ff432acd2",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784601765213
+      },
+      {
+        "executionId": "89ead6c9-ab3d-40d3-b874-027ff432acd2",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784601953089
+      }
+    ],
+    "4.2 Write property tests for validators (Properties 2, 3, 4)": [
+      {
+        "executionId": "89ead6c9-ab3d-40d3-b874-027ff432acd2",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784599974979
+      },
+      {
+        "executionId": "89ead6c9-ab3d-40d3-b874-027ff432acd2",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784601490062
+      },
+      {
+        "executionId": "89ead6c9-ab3d-40d3-b874-027ff432acd2",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784601755659
+      }
+    ],
+    "4.3 Write property tests for sessions (Properties 5, 6, 7)": [
+      {
+        "executionId": "89ead6c9-ab3d-40d3-b874-027ff432acd2",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784599975014
+      },
+      {
+        "executionId": "89ead6c9-ab3d-40d3-b874-027ff432acd2",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784601958073
+      },
+      {
+        "executionId": "a7e7131e-633b-48f4-b763-b5991238bb43",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784603452920
+      },
+      {
+        "executionId": "a7e7131e-633b-48f4-b763-b5991238bb43",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784603724184
+      }
+    ],
+    "4.4 Write unit tests for session save, history, and previous performance": [
+      {
+        "executionId": "89ead6c9-ab3d-40d3-b874-027ff432acd2",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784599975057
+      },
+      {
+        "executionId": "89ead6c9-ab3d-40d3-b874-027ff432acd2",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784601958759
+      },
+      {
+        "executionId": "a7e7131e-633b-48f4-b763-b5991238bb43",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784603453532
+      },
+      {
+        "executionId": "a7e7131e-633b-48f4-b763-b5991238bb43",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784603725021
+      }
+    ],
+    "5. Checkpoint - Backend API complete": [
+      {
+        "executionId": "89ead6c9-ab3d-40d3-b874-027ff432acd2",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784599975109
+      },
+      {
+        "executionId": "a7e7131e-633b-48f4-b763-b5991238bb43",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784603734380
+      },
+      {
+        "executionId": "a7e7131e-633b-48f4-b763-b5991238bb43",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784603740171
+      }
+    ],
+    "6.1 Create the HTML shell and CSS styles": [
+      {
+        "executionId": "89ead6c9-ab3d-40d3-b874-027ff432acd2",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784599975144
+      },
+      {
+        "executionId": "89ead6c9-ab3d-40d3-b874-027ff432acd2",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784601191990
+      },
+      {
+        "executionId": "89ead6c9-ab3d-40d3-b874-027ff432acd2",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784601483590
+      }
+    ],
+    "6.2 Create the API client and page router": [
+      {
+        "executionId": "89ead6c9-ab3d-40d3-b874-027ff432acd2",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784599975187
+      },
+      {
+        "executionId": "89ead6c9-ab3d-40d3-b874-027ff432acd2",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784601490772
+      },
+      {
+        "executionId": "89ead6c9-ab3d-40d3-b874-027ff432acd2",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784601756434
+      }
+    ],
+    "6.3 Create the day selection view": [
+      {
+        "executionId": "89ead6c9-ab3d-40d3-b874-027ff432acd2",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784599975220
+      },
+      {
+        "executionId": "89ead6c9-ab3d-40d3-b874-027ff432acd2",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784601765898
+      },
+      {
+        "executionId": "89ead6c9-ab3d-40d3-b874-027ff432acd2",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784601953806
+      }
+    ],
+    "7.1 Create the workout view with exercise data entry": [
+      {
+        "executionId": "89ead6c9-ab3d-40d3-b874-027ff432acd2",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784599975262
+      },
+      {
+        "executionId": "89ead6c9-ab3d-40d3-b874-027ff432acd2",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784601959500
+      },
+      {
+        "executionId": "a7e7131e-633b-48f4-b763-b5991238bb43",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784603454258
+      },
+      {
+        "executionId": "a7e7131e-633b-48f4-b763-b5991238bb43",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784603726123
+      }
+    ],
+    "7.2 Implement save functionality and confirmation flow": [
+      {
+        "executionId": "89ead6c9-ab3d-40d3-b874-027ff432acd2",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784599975307
+      },
+      {
+        "executionId": "a7e7131e-633b-48f4-b763-b5991238bb43",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784603735111
+      },
+      {
+        "executionId": "a7e7131e-633b-48f4-b763-b5991238bb43",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784604042910
+      }
+    ],
+    "8.1 Create the history view": [
+      {
+        "executionId": "89ead6c9-ab3d-40d3-b874-027ff432acd2",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784599975346
+      },
+      {
+        "executionId": "a7e7131e-633b-48f4-b763-b5991238bb43",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784603735731
+      },
+      {
+        "executionId": "a7e7131e-633b-48f4-b763-b5991238bb43",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784604043719
+      }
+    ],
+    "8.2 Create the upload view": [
+      {
+        "executionId": "89ead6c9-ab3d-40d3-b874-027ff432acd2",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784599975384
+      },
+      {
+        "executionId": "a7e7131e-633b-48f4-b763-b5991238bb43",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784603736479
+      },
+      {
+        "executionId": "a7e7131e-633b-48f4-b763-b5991238bb43",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784604044495
+      }
+    ],
+    "9.1 Add auto-sync of in-progress workout data to backend": [
+      {
+        "executionId": "89ead6c9-ab3d-40d3-b874-027ff432acd2",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784599975421
+      },
+      {
+        "executionId": "a7e7131e-633b-48f4-b763-b5991238bb43",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784604053833
+      },
+      {
+        "executionId": "a7e7131e-633b-48f4-b763-b5991238bb43",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784604472531
+      }
+    ],
+    "9.2 Write property test for in-progress state persistence (Property 12)": [
+      {
+        "executionId": "89ead6c9-ab3d-40d3-b874-027ff432acd2",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784599975463
+      },
+      {
+        "executionId": "a7e7131e-633b-48f4-b763-b5991238bb43",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784604477428
+      },
+      {
+        "executionId": "a7e7131e-633b-48f4-b763-b5991238bb43",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784604670430
+      }
+    ],
+    "10.1 Write property test for exercise retrieval (Property 1)": [
+      {
+        "executionId": "89ead6c9-ab3d-40d3-b874-027ff432acd2",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784599975505
+      },
+      {
+        "executionId": "a7e7131e-633b-48f4-b763-b5991238bb43",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784604478136
+      },
+      {
+        "executionId": "a7e7131e-633b-48f4-b763-b5991238bb43",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784604671210
+      }
+    ],
+    "10.2 Write property test for program re-upload preserving history (Property 10)": [
+      {
+        "executionId": "89ead6c9-ab3d-40d3-b874-027ff432acd2",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784599975548
+      },
+      {
+        "executionId": "a7e7131e-633b-48f4-b763-b5991238bb43",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784604478868
+      },
+      {
+        "executionId": "a7e7131e-633b-48f4-b763-b5991238bb43",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784604671963
+      }
+    ],
+    "11.1 Wire everything together and add startup script": [
+      {
+        "executionId": "89ead6c9-ab3d-40d3-b874-027ff432acd2",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784599975591
+      },
+      {
+        "executionId": "a7e7131e-633b-48f4-b763-b5991238bb43",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784604680581
+      },
+      {
+        "executionId": "a7e7131e-633b-48f4-b763-b5991238bb43",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784638502793
+      }
+    ],
+    "11.2 Write integration tests for full workflow": [
+      {
+        "executionId": "89ead6c9-ab3d-40d3-b874-027ff432acd2",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784599975632
+      },
+      {
+        "executionId": "a7e7131e-633b-48f4-b763-b5991238bb43",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784638507636
+      },
+      {
+        "executionId": "a7e7131e-633b-48f4-b763-b5991238bb43",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784638657667
+      }
+    ],
+    "12. Final checkpoint - All tests pass": [
+      {
+        "executionId": "89ead6c9-ab3d-40d3-b874-027ff432acd2",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784599975672
+      },
+      {
+        "executionId": "a7e7131e-633b-48f4-b763-b5991238bb43",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784638662325
+      },
+      {
+        "executionId": "a7e7131e-633b-48f4-b763-b5991238bb43",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784638716031
+      }
+    ],
+    "1. Set up project structure and core infrastructure": [
+      {
+        "executionId": "89ead6c9-ab3d-40d3-b874-027ff432acd2",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784601187061
+      }
+    ],
+    "2. Implement CSV parsing and program upload": [
+      {
+        "executionId": "89ead6c9-ab3d-40d3-b874-027ff432acd2",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784601754825
+      }
+    ],
+    "6. Implement frontend - navigation and day selection": [
+      {
+        "executionId": "89ead6c9-ab3d-40d3-b874-027ff432acd2",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784601953846
+      }
+    ],
+    "4. Implement workout session recording and history": [
+      {
+        "executionId": "a7e7131e-633b-48f4-b763-b5991238bb43",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784603725080
+      }
+    ],
+    "7. Implement frontend - workout data entry": [
+      {
+        "executionId": "a7e7131e-633b-48f4-b763-b5991238bb43",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784604042977
+      }
+    ],
+    "8. Implement frontend - history and upload views": [
+      {
+        "executionId": "a7e7131e-633b-48f4-b763-b5991238bb43",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784604044539
+      }
+    ],
+    "9. Implement in-progress session state persistence": [
+      {
+        "executionId": "a7e7131e-633b-48f4-b763-b5991238bb43",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784604670485
+      }
+    ],
+    "10. Implement exercise retrieval property test and program re-upload test": [
+      {
+        "executionId": "a7e7131e-633b-48f4-b763-b5991238bb43",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784604672003
+      }
+    ],
+    "11. Final integration and wiring": [
+      {
+        "executionId": "a7e7131e-633b-48f4-b763-b5991238bb43",
+        "chatSessionId": "sess_d26b15be-2430-4e92-bb34-f77df34cef84",
+        "timestamp": 1784638657706
+      }
+    ]
+  }
+}
