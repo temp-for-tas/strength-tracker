@@ -17,6 +17,8 @@ const api = {
 
     getPreviousSession: (week, day) => fetch(`/api/sessions/previous/${week}/${day}`).then(r => r.json()),
 
+    getExactSession: (week, day) => fetch(`/api/sessions/exact/${week}/${day}`).then(r => r.json()),
+
     saveSession: (data) => fetch('/api/sessions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

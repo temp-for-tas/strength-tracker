@@ -25,9 +25,10 @@ window.views['workout'] = {
         container.innerHTML = '<div class="loading"><div class="spinner"></div>Loading...</div>';
 
         try {
-            const [exerciseData, previousData, savedState] = await Promise.all([
+            const [exerciseData, previousData, exactData, savedState] = await Promise.all([
                 api.getExercises(week, day),
                 api.getPreviousSession(week, day),
+                api.getExactSession(week, day),
                 api.loadState()
             ]);
 
@@ -37,7 +38,13 @@ window.views['workout'] = {
             this.state.exercises = exerciseData.exercises || [];
             this.initState(this.state.exercises);
 
+            // If a saved session exists for this exact week/day, pre-fill inputs
+            if (exactData && exactData.session_id) {
+                this.prefillFromSession(exactData);
+            }
+
             // Restore saved in-progress state if it matches current week/day
+            // (overrides exact session pre-fill since it's more recent user input)
             if (savedState && savedState.value &&
                 savedState.value.week == week && savedState.value.day == day) {
                 this.restoreSavedState(savedState.value);
@@ -577,6 +584,28 @@ window.views['workout'] = {
         this.state.sets = {};
         this.state.notes = {};
         this.state.dirty = false;
+    },
+
+    // Pre-fill inputs from a previously saved session for this exact week/day
+    prefillFromSession(sessionData) {
+        const exercises = sessionData.exercises || {};
+        for (const [exerciseName, exData] of Object.entries(exercises)) {
+            if (this.state.sets[exerciseName]) {
+                const sets = exData.sets || [];
+                for (const set of sets) {
+                    const setNum = set.set_number;
+                    if (this.state.sets[exerciseName][setNum]) {
+                        this.state.sets[exerciseName][setNum] = {
+                            weight: set.weight !== null && set.weight !== undefined ? String(set.weight) : '',
+                            reps: set.reps !== null && set.reps !== undefined ? String(set.reps) : ''
+                        };
+                    }
+                }
+            }
+            if (this.state.notes.hasOwnProperty(exerciseName) && exData.note) {
+                this.state.notes[exerciseName] = exData.note;
+            }
+        }
     },
 
     // Restore saved in-progress state from backend
