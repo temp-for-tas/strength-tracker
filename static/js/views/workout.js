@@ -119,7 +119,7 @@ window.views['workout'] = {
                 html += `<div class="input-group">`;
                 html += `<label for="weight-${idx}-${s}">Weight</label>`;
                 html += `<input type="number" id="weight-${idx}-${s}" step="0.5" min="0" max="9999" 
-                    placeholder="${prevSet ? prevSet.weight : ''}" 
+                    placeholder="" 
                     value="${this.escapeAttr(currentWeight)}"
                     data-exercise="${this.escapeAttr(name)}" data-set="${s}" data-field="weight"
                     aria-label="Weight for set ${s}">`;
@@ -128,7 +128,7 @@ window.views['workout'] = {
                 html += `<div class="input-group">`;
                 html += `<label for="reps-${idx}-${s}">Reps</label>`;
                 html += `<input type="number" id="reps-${idx}-${s}" step="1" min="0" max="999" 
-                    placeholder="${prevSet ? prevSet.reps : ''}" 
+                    placeholder="" 
                     value="${this.escapeAttr(currentReps)}"
                     data-exercise="${this.escapeAttr(name)}" data-set="${s}" data-field="reps"
                     aria-label="Reps for set ${s}">`;
