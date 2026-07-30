@@ -271,3 +271,80 @@ def get_previous_session(week, day):
         'completed_at': session['completed_at'],
         'exercises': exercises
     }), 200
+
+
+@sessions_bp.route('/api/sessions/exact/<int:week>/<int:day>', methods=['GET'])
+def get_exact_session(week, day):
+    """Return the most recent session for an exact week+day combination.
+
+    Unlike the 'previous' endpoint which searches across all weeks for a day,
+    this returns only a session that matches both the specific week AND day.
+    Used to pre-fill inputs when revisiting a completed workout.
+
+    Returns sets grouped by exercise_name and notes included.
+    Returns empty response if no session exists for this exact week/day.
+    """
+    db = get_db()
+
+    session = db.execute(
+        '''SELECT id, completed_at
+           FROM sessions
+           WHERE week = ? AND day = ?
+           ORDER BY completed_at DESC, id DESC
+           LIMIT 1''',
+        (week, day)
+    ).fetchone()
+
+    if session is None:
+        return jsonify({'session_id': None, 'exercises': {}}), 200
+
+    session_id = session['id']
+
+    # Get set entries for this session
+    set_rows = db.execute(
+        '''SELECT exercise_name, set_number, weight, reps
+           FROM set_entries
+           WHERE session_id = ?
+           ORDER BY exercise_name, set_number''',
+        (session_id,)
+    ).fetchall()
+
+    # Get notes for this session
+    note_rows = db.execute(
+        '''SELECT exercise_name, note_text
+           FROM notes
+           WHERE session_id = ?''',
+        (session_id,)
+    ).fetchall()
+
+    # Build notes lookup
+    notes_map = {row['exercise_name']: row['note_text'] for row in note_rows}
+
+    # Group sets by exercise_name
+    exercises = {}
+    for row in set_rows:
+        exercise_name = row['exercise_name']
+        if exercise_name not in exercises:
+            exercises[exercise_name] = {
+                'sets': [],
+                'note': notes_map.get(exercise_name, '')
+            }
+        exercises[exercise_name]['sets'].append({
+            'set_number': row['set_number'],
+            'weight': row['weight'],
+            'reps': row['reps']
+        })
+
+    # Include exercises that only have notes but no sets
+    for exercise_name, note_text in notes_map.items():
+        if exercise_name not in exercises:
+            exercises[exercise_name] = {
+                'sets': [],
+                'note': note_text
+            }
+
+    return jsonify({
+        'session_id': session_id,
+        'completed_at': session['completed_at'],
+        'exercises': exercises
+    }), 200
