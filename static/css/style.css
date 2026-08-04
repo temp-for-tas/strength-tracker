@@ -374,6 +374,13 @@ textarea {
     margin-bottom: 4px;
 }
 
+.previous-perf-source {
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: normal;
+    color: #666;
+}
+
 .previous-perf-set {
     display: flex;
     gap: 16px;
@@ -382,6 +389,20 @@ textarea {
 
 .previous-perf-set span {
     color: #444;
+}
+
+.previous-perf-note {
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px solid #e0e0e0;
+    font-style: italic;
+    color: #555;
+    font-size: 12px;
+}
+
+.previous-perf-note-label {
+    font-style: normal;
+    font-weight: 600;
 }
 
 .no-previous {

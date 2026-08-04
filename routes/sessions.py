@@ -348,3 +348,78 @@ def get_exact_session(week, day):
         'completed_at': session['completed_at'],
         'exercises': exercises
     }), 200
+
+
+@sessions_bp.route('/api/sessions/previous-by-exercise', methods=['GET'])
+def get_previous_by_exercise():
+    """Return the most recent performance for each requested exercise.
+
+    Each exercise is looked up independently — it finds the most recent
+    session containing that exercise, regardless of week/day. This supports
+    programs where exercises appear on different days across weeks.
+
+    Query params:
+        exercises: comma-separated list of exercise names
+
+    Returns a dict keyed by exercise_name, each with sets, note,
+    completed_at, week, and day from the session it came from.
+    """
+    exercises_param = request.args.get('exercises', '')
+    if not exercises_param:
+        return jsonify({'exercises': {}}), 200
+
+    exercise_names = [name.strip() for name in exercises_param.split(',') if name.strip()]
+    if not exercise_names:
+        return jsonify({'exercises': {}}), 200
+
+    db = get_db()
+    result = {}
+
+    for exercise_name in exercise_names:
+        # Find the most recent session that contains this exercise
+        # by looking at set_entries for this exercise_name
+        session_row = db.execute(
+            '''SELECT s.id, s.week, s.day, s.completed_at
+               FROM sessions s
+               INNER JOIN set_entries se ON se.session_id = s.id
+               WHERE se.exercise_name = ?
+               ORDER BY s.completed_at DESC, s.id DESC
+               LIMIT 1''',
+            (exercise_name,)
+        ).fetchone()
+
+        if session_row is None:
+            # No previous data for this exercise
+            continue
+
+        session_id = session_row['id']
+
+        # Get sets for this exercise from that session
+        set_rows = db.execute(
+            '''SELECT set_number, weight, reps
+               FROM set_entries
+               WHERE session_id = ? AND exercise_name = ?
+               ORDER BY set_number''',
+            (session_id, exercise_name)
+        ).fetchall()
+
+        # Get note for this exercise from that session
+        note_row = db.execute(
+            '''SELECT note_text
+               FROM notes
+               WHERE session_id = ? AND exercise_name = ?''',
+            (session_id, exercise_name)
+        ).fetchone()
+
+        result[exercise_name] = {
+            'sets': [
+                {'set_number': r['set_number'], 'weight': r['weight'], 'reps': r['reps']}
+                for r in set_rows
+            ],
+            'note': note_row['note_text'] if note_row else '',
+            'completed_at': session_row['completed_at'],
+            'week': session_row['week'],
+            'day': session_row['day']
+        }
+
+    return jsonify({'exercises': result}), 200

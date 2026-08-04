@@ -25,9 +25,8 @@ window.views['workout'] = {
         container.innerHTML = '<div class="loading"><div class="spinner"></div>Loading...</div>';
 
         try {
-            const [exerciseData, previousData, exactData, savedState] = await Promise.all([
+            const [exerciseData, exactData, savedState] = await Promise.all([
                 api.getExercises(week, day),
-                api.getPreviousSession(week, day),
                 api.getExactSession(week, day),
                 api.loadState()
             ]);
@@ -36,6 +35,13 @@ window.views['workout'] = {
             api.setCurrentWeek(week);
 
             this.state.exercises = exerciseData.exercises || [];
+
+            // Fetch previous performance per-exercise using the new endpoint
+            const exerciseNames = this.state.exercises.map(ex => ex.exercise_name);
+            const previousData = exerciseNames.length > 0
+                ? await api.getPreviousByExercise(exerciseNames)
+                : { exercises: {} };
+
             this.initState(this.state.exercises);
 
             // If a saved session exists for this exact week/day, pre-fill inputs
@@ -87,7 +93,6 @@ window.views['workout'] = {
         const { week, day } = this.state;
         const exercises = exerciseData.exercises || [];
         const prevExercises = previousData.exercises || {};
-        const hasPrevious = previousData.session_id !== null && previousData.session_id !== undefined;
 
         let html = `
             <a href="#/" class="btn btn-secondary mb-16">&larr; Back to Days</a>
@@ -104,13 +109,14 @@ window.views['workout'] = {
         exercises.forEach((ex, idx) => {
             const name = ex.exercise_name;
             const prevEx = prevExercises[name];
+            const hasPrevious = !!(prevEx && prevEx.sets && prevEx.sets.length > 0);
             const prevNote = prevEx ? prevEx.note : null;
 
             html += `<div class="exercise-card" data-exercise="${this.escapeAttr(name)}">`;
             html += `<div class="exercise-name">${this.escapeHtml(name)}</div>`;
             html += `<div class="exercise-target">${ex.target_sets} sets &times; ${this.escapeHtml(ex.target_reps)} reps</div>`;
 
-            // Previous performance
+            // Previous performance (includes note)
             html += this.renderPreviousPerformance(prevEx, hasPrevious, prevNote, ex.target_sets);
 
             // Set input rows based on target_sets (1-10)
@@ -150,9 +156,6 @@ window.views['workout'] = {
             const charCount = currentNote.length;
             html += `<div class="notes-section">`;
             html += `<label class="notes-label" for="note-${idx}">Notes</label>`;
-            if (hasPrevious && prevNote) {
-                html += `<div class="text-small text-muted mb-8">Previous: ${this.escapeHtml(prevNote)}</div>`;
-            }
             html += `<textarea id="note-${idx}" maxlength="500" 
                 data-exercise="${this.escapeAttr(name)}" 
                 placeholder="Add notes about form, difficulty, etc."
@@ -364,7 +367,15 @@ window.views['workout'] = {
 
         const numSets = targetSets || 4;
         let html = '<div class="previous-perf">';
-        html += '<div class="previous-perf-title">Previous Performance</div>';
+        html += '<div class="previous-perf-title">Previous Performance';
+        if (prevEx.week && prevEx.day) {
+            html += ` <span class="previous-perf-source">— Week ${prevEx.week}, Day ${prevEx.day}`;
+            if (prevEx.completed_at) {
+                html += ` (${this.formatShortDate(prevEx.completed_at)})`;
+            }
+            html += '</span>';
+        }
+        html += '</div>';
         for (let s = 1; s <= numSets; s++) {
             const prevSet = prevEx.sets.find(ps => ps.set_number === s);
             if (prevSet) {
@@ -374,8 +385,25 @@ window.views['workout'] = {
                 html += `</div>`;
             }
         }
+        if (prevNote) {
+            html += `<div class="previous-perf-note"><span class="previous-perf-note-label">Note:</span> ${this.escapeHtml(prevNote)}</div>`;
+        }
         html += '</div>';
         return html;
+    },
+
+    formatShortDate(isoStr) {
+        if (!isoStr) return '';
+        try {
+            const date = new Date(isoStr);
+            if (isNaN(date.getTime())) return isoStr;
+            return date.toLocaleDateString(undefined, {
+                month: 'short',
+                day: 'numeric'
+            });
+        } catch (e) {
+            return isoStr;
+        }
     },
 
     attachEventListeners(container, exercises) {
