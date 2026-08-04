@@ -2,7 +2,7 @@
 
 ## Introduction
 
-A locally-hosted Android workout tracking application that allows the user to follow a pre-loaded multi-day strength training program (1–7 days per week, determined by the uploaded CSV). The app enables workout selection by day, tracks weight, reps, and sets for each exercise, supports per-exercise notes, and maintains a full workout history. Exercise programs are pre-seeded via CSV upload, and the app surfaces previous performance data each time a workout is repeated.
+A locally-hosted Android workout tracking application, installable as a Progressive Web App (PWA), that allows the user to follow a pre-loaded multi-day strength training program (1–7 days per week, determined by the uploaded CSV). The app enables workout selection by day, tracks weight, reps, and sets for each exercise, supports per-exercise notes, and maintains a full workout history. Exercise programs are pre-seeded via CSV upload, and the app surfaces previous performance data each time a workout is repeated.
 
 ## Glossary
 
@@ -128,3 +128,15 @@ A locally-hosted Android workout tracking application that allows the user to fo
 4. THE App SHALL support exercises varying between weeks — the same day number in different weeks may contain different exercises, sets, or target reps
 5. WHEN the user views the Workout_Day list, THE App SHALL indicate the current week of the program and allow navigation to any week
 6. THE App SHALL determine the number of Workout_Days per week from the loaded program, supporting 1 to 7 days per week as defined by the CSV upload
+
+### Requirement 10: Progressive Web App Installation
+
+**User Story:** As a user, I want to install the app to my Android home screen like a native app, so that I can launch it with a single tap in full-screen mode without browser chrome.
+
+#### Acceptance Criteria
+
+1. THE App SHALL include a valid web app manifest (`manifest.json`) with: app name, short name, start URL, display mode set to "standalone", theme color, background color, and at least one icon in 192x192 and 512x512 pixel sizes
+2. THE App SHALL register a service worker that caches the application shell (HTML, CSS, JS) for offline-capable loading of the UI
+3. WHEN the user accesses the App via Chrome on Android, THE App SHALL meet Chrome's installability criteria such that the browser presents an "Add to Home Screen" prompt or allows installation via the browser menu
+4. WHEN launched from the home screen, THE App SHALL display in standalone mode (full-screen without browser address bar or navigation controls)
+5. THE App SHALL include appropriate meta tags in the HTML for mobile web app capability (viewport, theme-color, apple-mobile-web-app-capable for iOS compatibility)

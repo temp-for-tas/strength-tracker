@@ -6,8 +6,9 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#1a73e8">
+    <meta name="theme-color" content="#1a1a2e">
     <title>Workout Tracker</title>
+    <link rel="manifest" href="/static/manifest.json">
     <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
@@ -23,5 +24,10 @@
     <script src="/static/js/views/history.js"></script>
     <script src="/static/js/views/upload.js"></script>
     <script src="/static/js/app.js"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/static/sw.js');
+      }
+    </script>
 </body>
 </html>

@@ -55,8 +55,8 @@ def init_db():
             session_id INTEGER NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
             exercise_name TEXT NOT NULL,
             set_number INTEGER NOT NULL CHECK(set_number >= 1 AND set_number <= 10),
-            weight REAL CHECK(weight >= 0.5 AND weight <= 9999),
-            reps INTEGER CHECK(reps >= 1 AND reps <= 999),
+            weight REAL CHECK(weight >= 0 AND weight <= 9999),
+            reps INTEGER CHECK(reps >= 0 AND reps <= 999),
             UNIQUE(session_id, exercise_name, set_number)
         );
 
@@ -72,6 +72,51 @@ def init_db():
             key TEXT PRIMARY KEY,
             value TEXT NOT NULL
         );
+    ''')
+
+    # Migrate existing set_entries table if it has the old CHECK constraints
+    # (weight >= 0.5 instead of weight >= 0, reps >= 1 instead of reps >= 0)
+    _migrate_set_entries(db)
+
+
+def _migrate_set_entries(db):
+    """Migrate set_entries table to allow weight=0 and reps=0.
+
+    SQLite doesn't support ALTER TABLE to change CHECK constraints,
+    so we recreate the table if the old constraints are detected.
+    """
+    # Check the current table schema
+    row = db.execute(
+        "SELECT sql FROM sqlite_master WHERE type='table' AND name='set_entries'"
+    ).fetchone()
+
+    if row is None:
+        return  # Table doesn't exist yet (will be created by init_db)
+
+    create_sql = row[0] or ''
+
+    # Detect old constraints (weight >= 0.5 or reps >= 1)
+    if 'weight >= 0.5' not in create_sql and 'reps >= 1' not in create_sql:
+        return  # Already migrated or fresh schema
+
+    # Recreate table with new constraints
+    db.executescript('''
+        CREATE TABLE IF NOT EXISTS set_entries_new (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_id INTEGER NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
+            exercise_name TEXT NOT NULL,
+            set_number INTEGER NOT NULL CHECK(set_number >= 1 AND set_number <= 10),
+            weight REAL CHECK(weight >= 0 AND weight <= 9999),
+            reps INTEGER CHECK(reps >= 0 AND reps <= 999),
+            UNIQUE(session_id, exercise_name, set_number)
+        );
+
+        INSERT INTO set_entries_new (id, session_id, exercise_name, set_number, weight, reps)
+            SELECT id, session_id, exercise_name, set_number, weight, reps FROM set_entries;
+
+        DROP TABLE set_entries;
+
+        ALTER TABLE set_entries_new RENAME TO set_entries;
     ''')
 
 

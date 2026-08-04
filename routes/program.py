@@ -173,3 +173,34 @@ def get_current_week():
         'days_per_week': days_per_week,
         'total_weeks': total_weeks,
     }), 200
+
+
+
+@program_bp.route('/api/program/current-week', methods=['PUT'])
+def set_current_week():
+    """Update the current program week in app_state.
+
+    Called when the user enters a workout to persist their last active week.
+    Expects JSON body: { "week": N }
+    """
+    data = request.get_json()
+
+    if data is None or 'week' not in data:
+        return jsonify({'error': 'Request must include "week"'}), 400
+
+    week = data['week']
+    if not isinstance(week, int) or isinstance(week, bool) or week < 1 or week > 52:
+        return jsonify({'error': '"week" must be an integer between 1 and 52'}), 400
+
+    db = get_db()
+    try:
+        db.execute(
+            '''INSERT OR REPLACE INTO app_state (key, value) VALUES (?, ?)''',
+            ('current_week', str(week))
+        )
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        return jsonify({'error': 'storage', 'message': str(e)}), 500
+
+    return jsonify({'success': True, 'current_week': week}), 200

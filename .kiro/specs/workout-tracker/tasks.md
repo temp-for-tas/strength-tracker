@@ -211,7 +211,28 @@ Build a locally-hosted workout tracking web app using Python (Flask), SQLite, an
     - Test data persistence across simulated server restart
     - _Requirements: 4.2, 5.1, 6.1, 7.2, 8.2_
 
-- [x] 12. Final checkpoint - All tests pass
+- [x] 13. Implement Progressive Web App support
+  - [x] 13.1 Create web app manifest and app icons
+    - Create `static/manifest.json` with: name "Strength Tracker", short_name "Strength", start_url "/", display "standalone", theme_color and background_color (dark gym theme), icons array with 192x192 and 512x512 PNG icons
+    - Create or source simple app icons at both sizes (can be generated programmatically or use a simple design)
+    - _Requirements: 10.1_
+
+  - [x] 13.2 Create and register service worker
+    - Create `static/sw.js` implementing cache-first strategy for the application shell
+    - On install event: pre-cache all static assets (HTML, CSS, JS, manifest, icons)
+    - On fetch event: serve static assets from cache first; pass all `/api/*` requests through to network (never cache API calls)
+    - Implement cache versioning (cache name includes a version string to bust stale caches on updates)
+    - _Requirements: 10.2_
+
+  - [x] 13.3 Update HTML shell for PWA support
+    - Add `<link rel="manifest" href="/static/manifest.json">` to `templates/index.html`
+    - Add `<meta name="theme-color" content="...">` tag
+    - Add `<meta name="apple-mobile-web-app-capable" content="yes">` for iOS compatibility
+    - Add service worker registration script: `if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/static/sw.js'); }`
+    - Verify Chrome installability criteria are met (HTTPS not required for localhost)
+    - _Requirements: 10.1, 10.3, 10.4, 10.5_
+
+- [x] 14. Final checkpoint - All tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 ## Notes
@@ -237,9 +258,9 @@ Build a locally-hosted workout tracking web app using Python (Flask), SQLite, an
     { "id": 3, "tasks": ["2.2", "2.3", "2.4", "4.2", "6.2"] },
     { "id": 4, "tasks": ["4.1", "6.3"] },
     { "id": 5, "tasks": ["4.3", "4.4", "7.1"] },
-    { "id": 6, "tasks": ["7.2", "8.1", "8.2"] },
-    { "id": 7, "tasks": ["9.1"] },
-    { "id": 8, "tasks": ["9.2", "10.1", "10.2"] },
+    { "id": 6, "tasks": ["7.2", "8.1", "8.2", "13.1"] },
+    { "id": 7, "tasks": ["9.1", "13.2"] },
+    { "id": 8, "tasks": ["9.2", "10.1", "10.2", "13.3"] },
     { "id": 9, "tasks": ["11.1"] },
     { "id": 10, "tasks": ["11.2"] }
   ]

@@ -9,12 +9,20 @@ const api = {
 
     getCurrentWeek: () => fetch('/api/program/current-week').then(r => r.json()),
 
+    setCurrentWeek: (week) => fetch('/api/program/current-week', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ week: parseInt(week) })
+    }).then(r => r.json()),
+
     getPreviousSession: (week, day) => fetch(`/api/sessions/previous/${week}/${day}`).then(r => r.json()),
 
     getPreviousByExercise: (exerciseNames) => {
         const params = encodeURIComponent(exerciseNames.join(','));
         return fetch(`/api/sessions/previous-by-exercise?exercises=${params}`).then(r => r.json());
     },
+
+    getExactSession: (week, day) => fetch(`/api/sessions/exact/${week}/${day}`).then(r => r.json()),
 
     saveSession: (data) => fetch('/api/sessions', {
         method: 'POST',

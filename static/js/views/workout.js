@@ -25,10 +25,14 @@ window.views['workout'] = {
         container.innerHTML = '<div class="loading"><div class="spinner"></div>Loading...</div>';
 
         try {
-            const [exerciseData, savedState] = await Promise.all([
+            const [exerciseData, exactData, savedState] = await Promise.all([
                 api.getExercises(week, day),
+                api.getExactSession(week, day),
                 api.loadState()
             ]);
+
+            // Persist the current week so the Days tab returns here
+            api.setCurrentWeek(week);
 
             this.state.exercises = exerciseData.exercises || [];
 
@@ -40,7 +44,13 @@ window.views['workout'] = {
 
             this.initState(this.state.exercises);
 
+            // If a saved session exists for this exact week/day, pre-fill inputs
+            if (exactData && exactData.session_id) {
+                this.prefillFromSession(exactData);
+            }
+
             // Restore saved in-progress state if it matches current week/day
+            // (overrides exact session pre-fill since it's more recent user input)
             if (savedState && savedState.value &&
                 savedState.value.week == week && savedState.value.day == day) {
                 this.restoreSavedState(savedState.value);
@@ -121,8 +131,8 @@ window.views['workout'] = {
                 html += `<span class="set-label">${s}</span>`;
                 html += `<div class="input-group">`;
                 html += `<label for="weight-${idx}-${s}">Weight</label>`;
-                html += `<input type="number" id="weight-${idx}-${s}" step="0.5" min="0.5" max="9999" 
-                    placeholder="${prevSet ? prevSet.weight : ''}" 
+                html += `<input type="number" id="weight-${idx}-${s}" step="0.5" min="0" max="9999" 
+                    placeholder="" 
                     value="${this.escapeAttr(currentWeight)}"
                     data-exercise="${this.escapeAttr(name)}" data-set="${s}" data-field="weight"
                     aria-label="Weight for set ${s}">`;
@@ -130,8 +140,8 @@ window.views['workout'] = {
                 html += `</div>`;
                 html += `<div class="input-group">`;
                 html += `<label for="reps-${idx}-${s}">Reps</label>`;
-                html += `<input type="number" id="reps-${idx}-${s}" step="1" min="1" max="999" 
-                    placeholder="${prevSet ? prevSet.reps : ''}" 
+                html += `<input type="number" id="reps-${idx}-${s}" step="1" min="0" max="999" 
+                    placeholder="" 
                     value="${this.escapeAttr(currentReps)}"
                     data-exercise="${this.escapeAttr(name)}" data-set="${s}" data-field="reps"
                     aria-label="Reps for set ${s}">`;
@@ -371,7 +381,7 @@ window.views['workout'] = {
             if (prevSet) {
                 html += `<div class="previous-perf-set">`;
                 html += `<span>Set ${s}:</span>`;
-                html += `<span>${prevSet.weight}kg &times; ${prevSet.reps}</span>`;
+                html += `<span>${prevSet.weight} lb &times; ${prevSet.reps}</span>`;
                 html += `</div>`;
             }
         }
@@ -504,14 +514,14 @@ window.views['workout'] = {
         // Check if it's a valid number
         if (isNaN(num) || value === '') {
             input.classList.add('error');
-            if (errorEl) errorEl.textContent = 'Weight must be a number between 0.5 and 9999';
+            if (errorEl) errorEl.textContent = 'Weight must be a number between 0 and 9999';
             return false;
         }
 
-        // Check range
-        if (num < 0.5 || num > 9999) {
+        // Check range (0 is allowed for bodyweight exercises)
+        if (num < 0 || num > 9999) {
             input.classList.add('error');
-            if (errorEl) errorEl.textContent = 'Weight must be between 0.5 and 9999';
+            if (errorEl) errorEl.textContent = 'Weight must be between 0 and 9999';
             return false;
         }
 
@@ -534,21 +544,21 @@ window.views['workout'] = {
         // Check if it's a valid integer
         if (isNaN(num) || value.includes('.') || value.includes(',')) {
             input.classList.add('error');
-            if (errorEl) errorEl.textContent = 'Reps must be a whole number between 1 and 999';
+            if (errorEl) errorEl.textContent = 'Reps must be a whole number between 0 and 999';
             return false;
         }
 
         // Check it matches integer pattern
         if (num.toString() !== value) {
             input.classList.add('error');
-            if (errorEl) errorEl.textContent = 'Reps must be a whole number between 1 and 999';
+            if (errorEl) errorEl.textContent = 'Reps must be a whole number between 0 and 999';
             return false;
         }
 
-        // Check range
-        if (num < 1 || num > 999) {
+        // Check range (0 is allowed — means skipped set)
+        if (num < 0 || num > 999) {
             input.classList.add('error');
-            if (errorEl) errorEl.textContent = 'Reps must be between 1 and 999';
+            if (errorEl) errorEl.textContent = 'Reps must be between 0 and 999';
             return false;
         }
 
@@ -566,16 +576,17 @@ window.views['workout'] = {
         return false;
     },
 
-    // Utility: get all entered sets as array for save (used by task 7.2)
+    // Utility: get all entered sets as array for save
+    // A set is "entered" if reps is filled in. Weight is optional (blank → 0).
     getEnteredSets() {
         const sets = [];
         for (const [exerciseName, setData] of Object.entries(this.state.sets)) {
             for (const [setNum, values] of Object.entries(setData)) {
-                if (values.weight !== '' && values.reps !== '') {
+                if (values.reps !== '') {
                     sets.push({
                         exercise_name: exerciseName,
                         set_number: parseInt(setNum),
-                        weight: parseFloat(values.weight),
+                        weight: values.weight !== '' ? parseFloat(values.weight) : 0,
                         reps: parseInt(values.reps)
                     });
                 }
@@ -601,6 +612,28 @@ window.views['workout'] = {
         this.state.sets = {};
         this.state.notes = {};
         this.state.dirty = false;
+    },
+
+    // Pre-fill inputs from a previously saved session for this exact week/day
+    prefillFromSession(sessionData) {
+        const exercises = sessionData.exercises || {};
+        for (const [exerciseName, exData] of Object.entries(exercises)) {
+            if (this.state.sets[exerciseName]) {
+                const sets = exData.sets || [];
+                for (const set of sets) {
+                    const setNum = set.set_number;
+                    if (this.state.sets[exerciseName][setNum]) {
+                        this.state.sets[exerciseName][setNum] = {
+                            weight: set.weight !== null && set.weight !== undefined ? String(set.weight) : '',
+                            reps: set.reps !== null && set.reps !== undefined ? String(set.reps) : ''
+                        };
+                    }
+                }
+            }
+            if (this.state.notes.hasOwnProperty(exerciseName) && exData.note) {
+                this.state.notes[exerciseName] = exData.note;
+            }
+        }
     },
 
     // Restore saved in-progress state from backend

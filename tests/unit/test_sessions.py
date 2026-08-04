@@ -80,7 +80,7 @@ class TestSaveSession:
     def test_save_with_invalid_reps_returns_400(self, client):
         """Save with invalid reps returns 400 with field-level errors."""
         payload = _valid_session_payload(sets=[
-            {"exercise_name": "Bench Press", "set_number": 1, "weight": 100.0, "reps": 0},
+            {"exercise_name": "Bench Press", "set_number": 1, "weight": 100.0, "reps": -1},
         ])
         resp = client.post('/api/sessions', json=payload)
 

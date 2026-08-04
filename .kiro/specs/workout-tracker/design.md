@@ -49,6 +49,8 @@ The architecture is a standard two-tier web app collapsed onto a single device:
 
 ### Request Flow
 
+> **PWA Caching Note:** The service worker caches only the UI shell (HTML, CSS, JS, manifest, icons). All API calls (`/api/*`) pass through to Flask. This means the server must still be running for data operations, but the app UI loads instantly from cache after initial visit.
+
 ```mermaid
 sequenceDiagram
     participant Browser
@@ -157,17 +159,25 @@ def validate_session(data: dict) -> tuple[bool, list[str]]
 
 ### Frontend Components
 
-#### 1. Page Router (`app.js`)
+#### 1. HTML Shell (`templates/index.html`)
+
+The main HTML page served by Flask. For PWA support, it must:
+- Link the manifest via `<link rel="manifest" href="/static/manifest.json">`
+- Include `<meta name="theme-color">` tag
+- Include `<meta name="apple-mobile-web-app-capable" content="yes">` for iOS
+- Register the service worker in a `<script>` block at page load
+
+#### 2. Page Router (`app.js`)
 
 Client-side routing using hash-based navigation (`#/`, `#/workout/1/2`, `#/history`).
 
-#### 2. Day Selection View (`views/day-select.js`)
+#### 3. Day Selection View (`views/day-select.js`)
 
 - Displays workout days for the current week (Days 1–N where N is `days_per_week` from the program)
 - Week navigation (prev/next)
 - Shows "no program" state when empty
 
-#### 3. Workout View (`views/workout.js`)
+#### 4. Workout View (`views/workout.js`)
 
 - Displays exercises with input fields for weight/reps per set
 - Shows previous performance data
@@ -175,19 +185,19 @@ Client-side routing using hash-based navigation (`#/`, `#/workout/1/2`, `#/histo
 - Save button with confirmation/warning flow
 - Client-side input validation with error messages
 
-#### 4. History View (`views/history.js`)
+#### 5. History View (`views/history.js`)
 
 - Lists past sessions ordered by date
 - Drill-down into session details
 
-#### 5. Upload View (`views/upload.js`)
+#### 6. Upload View (`views/upload.js`)
 
 - CSV file picker
 - Displays parse results (success counts or error details)
 
-#### 6. API Client (`api.js`)
+#### 7. API Client (`api.js`)
 
-Thin wrapper around `fetch()` for all backend communication.
+Thin wrapper around `fetch()` for all backend communication. All API calls go through this module, which means the service worker can let them pass through to the network without caching.
 
 ```javascript
 const api = {
@@ -201,6 +211,23 @@ const api = {
     uploadCSV: (file) => { const fd = new FormData(); fd.append('file', file); return fetch('/api/program/upload', { method: 'POST', body: fd }).then(r => r.json()); }
 };
 ```
+
+#### 8. Service Worker (`static/sw.js`)
+
+- Implements a cache-first strategy for the application shell (HTML, CSS, JS, icons)
+- On install: pre-caches all static assets
+- On fetch: serves from cache first, falling back to network for API calls (`/api/*` routes are never cached)
+- Cache versioning: update cache name on deployment to bust stale caches
+
+#### 9. Web App Manifest (`static/manifest.json`)
+
+- `name`: "Strength Tracker"
+- `short_name`: "Strength"
+- `start_url`: "/"
+- `display`: "standalone"
+- `theme_color`: appropriate dark/gym theme color
+- `background_color`: matching background
+- `icons`: array with 192x192 and 512x512 PNG icons
 
 ## Data Models
 
@@ -412,6 +439,12 @@ This state lives in JavaScript memory and is not persisted until the user explic
 
 **Validates: Requirements 8.5**
 
+### Property 13: Service worker caches application shell
+
+*For any* set of static assets served by the application (HTML, CSS, JS files, manifest, icons), after the service worker installs and activates, all static asset requests SHALL be served from the cache without a network request to the Flask server. API requests (`/api/*`) SHALL always pass through to the network and never be served from cache.
+
+**Validates: Requirements 10.2**
+
 ## Error Handling
 
 ### Backend Error Handling
@@ -482,6 +515,7 @@ Each property test runs a minimum of 100 iterations and is tagged with its desig
 - Data persistence across server restart
 - Full workflow: upload CSV → select day → enter data → save → verify in history → verify previous performance
 - Browser-close scenario: enter data → sync state → "close browser" → reopen → verify state available
+- PWA installability: verify manifest is valid, service worker registers, and Chrome's installability criteria are met (can test with Lighthouse CI or manual checklist)
 
 ### Test File Organization
 

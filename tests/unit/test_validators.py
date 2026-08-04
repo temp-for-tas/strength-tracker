@@ -42,11 +42,12 @@ class TestValidateWeight:
         assert value is None
         assert err is not None
 
-    def test_rejects_zero(self):
+    def test_accepts_zero(self):
+        """Zero is now valid — used for bodyweight exercises."""
         is_valid, value, err = validate_weight(0)
-        assert is_valid is False
-        assert value is None
-        assert err is not None
+        assert is_valid is True
+        assert value == 0.0
+        assert err is None
 
     def test_rejects_negative(self):
         is_valid, value, err = validate_weight(-5)
@@ -54,11 +55,12 @@ class TestValidateWeight:
         assert value is None
         assert err is not None
 
-    def test_rejects_below_minimum(self):
+    def test_accepts_below_old_minimum(self):
+        """Values like 0.4 are now valid (new minimum is 0)."""
         is_valid, value, err = validate_weight(0.4)
-        assert is_valid is False
-        assert value is None
-        assert err is not None
+        assert is_valid is True
+        assert value == 0.4
+        assert err is None
 
     def test_rejects_above_maximum(self):
         is_valid, value, err = validate_weight(10000)
@@ -72,17 +74,19 @@ class TestValidateWeight:
         assert value is None
         assert err is not None
 
-    def test_rejects_empty_string(self):
+    def test_accepts_empty_string_as_zero(self):
+        """Empty string is valid — defaults to 0 (weight is optional)."""
         is_valid, value, err = validate_weight("")
-        assert is_valid is False
-        assert value is None
-        assert err is not None
+        assert is_valid is True
+        assert value == 0.0
+        assert err is None
 
-    def test_rejects_none(self):
+    def test_accepts_none_as_zero(self):
+        """None is valid — defaults to 0 (weight is optional)."""
         is_valid, value, err = validate_weight(None)
-        assert is_valid is False
-        assert value is None
-        assert err is not None
+        assert is_valid is True
+        assert value == 0.0
+        assert err is None
 
     def test_accepts_whole_number_as_string(self):
         is_valid, value, err = validate_weight("1")
@@ -124,11 +128,12 @@ class TestValidateReps:
         assert value == 12
         assert err is None
 
-    def test_rejects_zero(self):
+    def test_accepts_zero(self):
+        """Zero reps is valid — indicates a skipped set."""
         is_valid, value, err = validate_reps(0)
-        assert is_valid is False
-        assert value is None
-        assert err is not None
+        assert is_valid is True
+        assert value == 0
+        assert err is None
 
     def test_rejects_negative(self):
         is_valid, value, err = validate_reps(-1)
@@ -331,7 +336,8 @@ class TestValidateSession:
         assert is_valid is False
         assert any("sets[0]" in e for e in errors)
 
-    def test_rejects_invalid_reps_in_set(self):
+    def test_accepts_zero_reps_in_set(self):
+        """Zero reps is valid — means user explicitly skipped the set."""
         data = {
             "week": 1,
             "day": 1,
@@ -341,8 +347,8 @@ class TestValidateSession:
             "notes": []
         }
         is_valid, errors = validate_session(data)
-        assert is_valid is False
-        assert any("sets[0]" in e for e in errors)
+        assert is_valid is True
+        assert errors == []
 
     def test_rejects_note_too_long(self):
         data = {

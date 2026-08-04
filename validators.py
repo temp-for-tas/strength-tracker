@@ -6,36 +6,34 @@ import math
 def validate_weight(value):
     """Validate a weight value.
 
-    Accepts numeric values between 0.5 and 9999 with up to one decimal place.
-    Rejects non-numeric, negative, zero, or exceeding 9999, or values with
-    more than one decimal place.
+    Weight is optional: None or empty string → valid, parsed as 0.
+    For non-empty values, accepts numeric 0–9999 with up to one decimal place.
 
     Args:
-        value: The weight value to validate (string or numeric).
+        value: The weight value to validate (string, numeric, or None).
 
     Returns:
         tuple: (is_valid: bool, parsed_value_or_None: float|None, error_message_or_None: str|None)
     """
+    # Weight is optional — None or empty string defaults to 0
+    if value is None or (isinstance(value, str) and value.strip() == ''):
+        return (True, 0.0, None)
+
     # Try to convert to float
     try:
         weight = float(value)
     except (TypeError, ValueError):
-        return (False, None, "Weight must be a numeric value between 0.5 and 9999")
+        return (False, None, "Weight must be a numeric value between 0 and 9999")
 
     # Reject NaN and infinity
     if math.isnan(weight) or math.isinf(weight):
-        return (False, None, "Weight must be a numeric value between 0.5 and 9999")
+        return (False, None, "Weight must be a numeric value between 0 and 9999")
 
-    # Check range
-    if weight < 0.5 or weight > 9999:
-        return (False, None, "Weight must be between 0.5 and 9999")
+    # Check range (0 is allowed for bodyweight exercises)
+    if weight < 0 or weight > 9999:
+        return (False, None, "Weight must be between 0 and 9999")
 
     # Check decimal places (at most one)
-    # Multiply by 10 and check if it's an integer
-    if round(weight * 10, 5) != round(round(weight * 10, 5)):
-        return (False, None, "Weight must have at most one decimal place")
-
-    # More reliable decimal place check using string representation
     str_value = str(value).strip()
     if '.' in str_value:
         decimal_part = str_value.split('.')[-1]
@@ -48,8 +46,9 @@ def validate_weight(value):
 def validate_reps(value):
     """Validate a reps value.
 
-    Accepts integer values between 1 and 999.
-    Rejects non-integer, less than 1, or exceeding 999.
+    Accepts integer values between 0 and 999.
+    0 reps means the user explicitly skipped that set.
+    Reps cannot be null/empty — the user must provide a value.
 
     Args:
         value: The reps value to validate (string or numeric).
@@ -57,15 +56,19 @@ def validate_reps(value):
     Returns:
         tuple: (is_valid: bool, parsed_value_or_None: int|None, error_message_or_None: str|None)
     """
+    # Reps is required — None or empty is not allowed
+    if value is None or (isinstance(value, str) and value.strip() == ''):
+        return (False, None, "Reps is required")
+
     # Try to convert to a number first
     try:
         num = float(value)
     except (TypeError, ValueError):
-        return (False, None, "Reps must be an integer between 1 and 999")
+        return (False, None, "Reps must be an integer between 0 and 999")
 
     # Reject NaN and infinity
     if math.isnan(num) or math.isinf(num):
-        return (False, None, "Reps must be an integer between 1 and 999")
+        return (False, None, "Reps must be an integer between 0 and 999")
 
     # Check if it's an integer (no decimal part)
     if num != int(num):
@@ -73,9 +76,9 @@ def validate_reps(value):
 
     reps = int(num)
 
-    # Check range
-    if reps < 1 or reps > 999:
-        return (False, None, "Reps must be between 1 and 999")
+    # Check range (0 is allowed — means skipped set)
+    if reps < 0 or reps > 999:
+        return (False, None, "Reps must be between 0 and 999")
 
     return (True, reps, None)
 
@@ -173,16 +176,14 @@ def validate_session(data):
             elif set_number < 1 or set_number > 10:
                 errors.append(f"sets[{i}]: 'set_number' must be between 1 and 10")
 
-            # Validate weight
+            # Validate weight (optional — None/missing defaults to 0)
             weight = set_entry.get("weight")
-            if weight is None:
-                errors.append(f"sets[{i}]: 'weight' is required")
-            else:
+            if weight is not None:
                 is_valid, _, err = validate_weight(weight)
                 if not is_valid:
                     errors.append(f"sets[{i}]: {err}")
 
-            # Validate reps
+            # Validate reps (required)
             reps = set_entry.get("reps")
             if reps is None:
                 errors.append(f"sets[{i}]: 'reps' is required")
