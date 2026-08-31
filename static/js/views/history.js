@@ -34,7 +34,12 @@ window.views['history'] = {
     },
 
     renderSessionList(container, sessions) {
-        let html = '<h1>Workout History</h1>';
+        let html = `
+            <div class="history-header">
+                <h1>Workout History</h1>
+                <a class="btn btn-secondary" href="${api.exportHistoryUrl()}" download>Export History</a>
+            </div>
+        `;
 
         sessions.forEach(session => {
             const dateStr = this.formatDate(session.completed_at);

@@ -1,7 +1,9 @@
 """Session routes for workout session recording and history."""
+import csv
+import io
 from datetime import datetime
 
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, Response
 
 from database import get_db
 from validators import validate_session
@@ -423,3 +425,110 @@ def get_previous_by_exercise():
         }
 
     return jsonify({'exercises': result}), 200
+
+
+@sessions_bp.route('/api/sessions/export', methods=['GET'])
+def export_sessions():
+    """Export the full workout history as a flat CSV file.
+
+    Produces one row per recorded set, joined with its session metadata
+    (week, day, completed_at) and the exercise's note. Exercises that have
+    a note but no recorded sets appear as a single row with blank set fields.
+
+    Rows are ordered by completed_at, then by the program's exercise sort
+    order for that session's week/day, then by set number.
+
+    Returns a text/csv response with a Content-Disposition attachment so
+    browsers download it as a file.
+    """
+    db = get_db()
+
+    sessions = db.execute(
+        '''SELECT id, week, day, completed_at
+           FROM sessions
+           ORDER BY completed_at ASC, id ASC'''
+    ).fetchall()
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow([
+        'session_id', 'completed_at', 'week', 'day',
+        'exercise_name', 'set_number', 'weight', 'reps', 'note'
+    ])
+
+    for session in sessions:
+        session_id = session['id']
+        week = session['week']
+        day = session['day']
+        completed_at = session['completed_at']
+
+        # Program exercise order for this week/day (for stable, meaningful ordering)
+        order_rows = db.execute(
+            '''SELECT exercise_name FROM exercises
+               WHERE week = ? AND day = ?
+               ORDER BY sort_order''',
+            (week, day)
+        ).fetchall()
+        program_order = [row['exercise_name'] for row in order_rows]
+
+        # Sets for this session
+        set_rows = db.execute(
+            '''SELECT exercise_name, set_number, weight, reps
+               FROM set_entries
+               WHERE session_id = ?''',
+            (session_id,)
+        ).fetchall()
+
+        # Notes for this session
+        note_rows = db.execute(
+            '''SELECT exercise_name, note_text
+               FROM notes
+               WHERE session_id = ?''',
+            (session_id,)
+        ).fetchall()
+        notes_map = {row['exercise_name']: (row['note_text'] or '') for row in note_rows}
+
+        # Group sets by exercise
+        sets_by_exercise = {}
+        for row in set_rows:
+            sets_by_exercise.setdefault(row['exercise_name'], []).append(row)
+
+        # Build the ordered list of exercises: program order first,
+        # then any exercises present in the data but not in the program.
+        exercise_names = list(program_order)
+        for name in sets_by_exercise:
+            if name not in exercise_names:
+                exercise_names.append(name)
+        for name in notes_map:
+            if name not in exercise_names:
+                exercise_names.append(name)
+
+        for exercise_name in exercise_names:
+            exercise_sets = sorted(
+                sets_by_exercise.get(exercise_name, []),
+                key=lambda r: r['set_number']
+            )
+            note = notes_map.get(exercise_name, '')
+
+            if exercise_sets:
+                for s in exercise_sets:
+                    writer.writerow([
+                        session_id, completed_at, week, day,
+                        exercise_name, s['set_number'], s['weight'], s['reps'], note
+                    ])
+            elif note:
+                # Exercise has a note but no recorded sets
+                writer.writerow([
+                    session_id, completed_at, week, day,
+                    exercise_name, '', '', '', note
+                ])
+
+    csv_text = output.getvalue()
+    output.close()
+
+    filename = 'workout_history_' + datetime.now().strftime('%Y%m%d') + '.csv'
+    return Response(
+        csv_text,
+        mimetype='text/csv',
+        headers={'Content-Disposition': f'attachment; filename={filename}'}
+    )

@@ -36,6 +36,8 @@ const api = {
 
     getHistory: () => fetch('/api/sessions').then(r => r.json()),
 
+    exportHistoryUrl: () => '/api/sessions/export',
+
     getSession: (id) => fetch(`/api/sessions/${id}`).then(r => r.json()),
 
     uploadCSV: (file) => {
