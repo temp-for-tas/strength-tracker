@@ -524,6 +524,19 @@ textarea {
 }
 
 /* === History List === */
+.history-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+
+.history-header h1 {
+    margin: 0;
+}
+
 .history-item {
     display: flex;
     align-items: center;
