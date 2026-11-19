@@ -52,5 +52,5 @@ const api = {
         body: JSON.stringify(data)
     }).then(r => r.json()),
 
-    loadState: () => fetch('/api/state/load').then(r => r.json())
+    loadState: (key) => fetch('/api/state/load' + (key ? `?key=${encodeURIComponent(key)}` : '')).then(r => r.json())
 };
