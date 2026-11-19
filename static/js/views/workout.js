@@ -19,17 +19,40 @@ window.views['workout'] = {
 
     async render(container, params) {
         const { week, day } = params;
+
+        // Write any pending in-progress values under the workout they belong to
+        // before this view switches to a different week/day.
+        await this.flushAutoSave();
+
+        // Entered values are keyed by exercise name only, so drop them when
+        // switching to a different workout to avoid leaking values across workouts.
+        if (String(this.state.week) !== String(week) || String(this.state.day) !== String(day)) {
+            this.state.sets = {};
+            this.state.notes = {};
+            this.state.dirty = false;
+        }
+
         this.state.week = week;
         this.state.day = day;
 
         container.innerHTML = '<div class="loading"><div class="spinner"></div>Loading...</div>';
 
         try {
-            const [exerciseData, exactData, savedState] = await Promise.all([
+            const [exerciseData, exactData, workoutSavedState, legacySavedState] = await Promise.all([
                 api.getExercises(week, day),
                 api.getExactSession(week, day),
-                api.loadState()
+                api.loadState(this.stateKey(week, day)),
+                api.loadState() // legacy single-slot key, migrated below if it matches
             ]);
+
+            let savedState = workoutSavedState;
+            if (!(savedState && savedState.value) && legacySavedState && legacySavedState.value &&
+                legacySavedState.value.week == week && legacySavedState.value.day == day) {
+                // Migrate progress saved under the old single slot to this workout's own key
+                savedState = legacySavedState;
+                await api.saveState({ key: this.stateKey(week, day), value: legacySavedState.value });
+                await api.saveState({ key: 'in_progress_workout', value: null });
+            }
 
             // Persist the current week so the Days tab returns here
             api.setCurrentWeek(week);
@@ -249,8 +272,11 @@ window.views['workout'] = {
                 // Success
                 this.hideErrorBanner();
                 this.showToast('Workout saved!', 'success');
+                // Cancel any pending autosave so it can't re-create the in-progress entry
+                clearTimeout(this._autoSaveTimer);
+                this._autoSaveTimer = null;
                 this.resetState();
-                this.clearSavedState();
+                await this.clearSavedState();
                 this.removeSaveButton();
                 setTimeout(() => {
                     window.location.hash = '#/';
@@ -677,7 +703,7 @@ window.views['workout'] = {
         if (!this.state.week || !this.state.day) return;
 
         const payload = {
-            key: 'in_progress_workout',
+            key: this.stateKey(this.state.week, this.state.day),
             value: {
                 week: parseInt(this.state.week),
                 day: parseInt(this.state.day),
@@ -693,13 +719,27 @@ window.views['workout'] = {
         }
     },
 
-    // Clear saved in-progress state (called after successful session save)
+    // Clear saved in-progress state for the current workout (called after successful session save)
     async clearSavedState() {
         try {
-            await api.saveState({ key: 'in_progress_workout', value: null });
+            await api.saveState({ key: this.stateKey(this.state.week, this.state.day), value: null });
         } catch (err) {
             // Clearing failures are non-critical
         }
+    },
+
+    // Server key for one workout's in-progress state, so workouts don't overwrite each other
+    stateKey(week, day) {
+        return `in_progress_workout:${parseInt(week)}:${parseInt(day)}`;
+    },
+
+    // Immediately save pending in-progress values (if any) instead of waiting for the debounce.
+    // The payload is built synchronously, so it uses the week/day currently in state.
+    async flushAutoSave() {
+        if (!this._autoSaveTimer) return;
+        clearTimeout(this._autoSaveTimer);
+        this._autoSaveTimer = null;
+        await this.autoSave();
     },
 
     escapeHtml(str) {
