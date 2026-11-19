@@ -1,4 +1,6 @@
 """Program routes for CSV upload and exercise program retrieval."""
+from datetime import datetime
+
 from flask import Blueprint, request, jsonify
 
 from database import get_db
@@ -61,6 +63,17 @@ def upload_program():
             '''INSERT OR REPLACE INTO app_state (key, value) VALUES (?, ?)''',
             ('days_per_week', str(result.days_per_week))
         )
+
+        # Record when this program was loaded. Sessions saved before this
+        # point belong to a previous program and no longer pre-fill inputs
+        # (they remain in history and previous-performance lookups).
+        db.execute(
+            '''INSERT OR REPLACE INTO app_state (key, value) VALUES (?, ?)''',
+            ('program_loaded_at', datetime.now().strftime('%Y-%m-%dT%H:%M'))
+        )
+
+        # Discard in-progress entries from the previous program
+        db.execute("DELETE FROM app_state WHERE key GLOB 'in_progress_workout*'")
 
         db.commit()
     except Exception as e:
