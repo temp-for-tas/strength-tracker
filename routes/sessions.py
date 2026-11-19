@@ -288,13 +288,21 @@ def get_exact_session(week, day):
     """
     db = get_db()
 
+    # Only sessions saved since the current program was loaded count as
+    # "completed" in this program. Sessions from a previous program iteration
+    # stay in history but must not pre-fill this program's inputs.
+    loaded_row = db.execute(
+        "SELECT value FROM app_state WHERE key = 'program_loaded_at'"
+    ).fetchone()
+    loaded_at = loaded_row['value'] if loaded_row else ''
+
     session = db.execute(
         '''SELECT id, completed_at
            FROM sessions
-           WHERE week = ? AND day = ?
+           WHERE week = ? AND day = ? AND completed_at >= ?
            ORDER BY completed_at DESC, id DESC
            LIMIT 1''',
-        (week, day)
+        (week, day, loaded_at)
     ).fetchone()
 
     if session is None:
