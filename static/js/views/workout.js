@@ -8,10 +8,18 @@ window.views['workout'] = {
         week: null,
         day: null,
         exercises: [],
-        sets: {},      // { "exerciseName": { 1: { weight: "", reps: "" }, 2: {...}, ... } }
-        notes: {},     // { "exerciseName": "note text" }
+        // sets and notes are keyed by the scheduled exercise name (the "slot"),
+        // so choosing a different exercise in the dropdown keeps what was typed.
+        sets: {},      // { "slotName": { 1: { weight: "", reps: "" }, 2: {...}, ... } }
+        notes: {},     // { "slotName": "note text" }
+        selected: {},  // { "slotName": "exercise chosen in the dropdown" }
+        options: [],   // exercise names offered in the dropdown
+        cues: {},      // { "exerciseName": "cue text" } from the program's Notes column
         dirty: false
     },
+
+    // Previous performance by exercise name, for the exercises currently shown
+    previous: {},
 
     // Auto-save debounce timer
     _autoSaveTimer: null,
@@ -29,6 +37,7 @@ window.views['workout'] = {
         if (String(this.state.week) !== String(week) || String(this.state.day) !== String(day)) {
             this.state.sets = {};
             this.state.notes = {};
+            this.state.selected = {};
             this.state.dirty = false;
         }
 
@@ -58,12 +67,8 @@ window.views['workout'] = {
             api.setCurrentWeek(week);
 
             this.state.exercises = exerciseData.exercises || [];
-
-            // Fetch previous performance per-exercise using the new endpoint
-            const exerciseNames = this.state.exercises.map(ex => ex.exercise_name);
-            const previousData = exerciseNames.length > 0
-                ? await api.getPreviousByExercise(exerciseNames)
-                : { exercises: {} };
+            this.state.options = exerciseData.options || [];
+            this.state.cues = exerciseData.cues || {};
 
             this.initState(this.state.exercises);
 
@@ -78,6 +83,18 @@ window.views['workout'] = {
                 savedState.value.week == week && savedState.value.day == day) {
                 this.restoreSavedState(savedState.value);
             }
+
+            // Fetch previous performance for the exercises actually selected
+            // (after restoring, since a restored or pre-filled slot may use a
+            // different exercise than the scheduled one).
+            const selectedNames = [...new Set(this.state.exercises.map(ex => this.selectedFor(ex.exercise_name)))];
+            const previousData = selectedNames.length > 0
+                ? await api.getPreviousByExercise(selectedNames)
+                : { exercises: {} };
+            this.previous = previousData.exercises || {};
+            // Remember names that were looked up but have no history, so a later
+            // dropdown change doesn't ask the server again for them
+            selectedNames.forEach(n => { if (!(n in this.previous)) this.previous[n] = null; });
 
             this.renderWorkout(container, exerciseData, previousData);
         } catch (err) {
@@ -106,6 +123,9 @@ window.views['workout'] = {
             if (this.state.notes[name] === undefined) {
                 this.state.notes[name] = '';
             }
+            if (this.state.selected[name] === undefined) {
+                this.state.selected[name] = name;  // default: what the schedule says
+            }
         });
 
         // Expose state globally for save functionality (task 7.2)
@@ -115,8 +135,6 @@ window.views['workout'] = {
     renderWorkout(container, exerciseData, previousData) {
         const { week, day } = this.state;
         const exercises = exerciseData.exercises || [];
-        const prevExercises = previousData.exercises || {};
-
         let html = `
             <a href="#/" class="btn btn-secondary mb-16">&larr; Back to Days</a>
             <h1>Week ${week}, Day ${day}</h1>
@@ -130,17 +148,20 @@ window.views['workout'] = {
         }
 
         exercises.forEach((ex, idx) => {
+            // name is the scheduled exercise (the slot). State is keyed by it,
+            // while the dropdown selection decides what is saved and which
+            // history is shown.
             const name = ex.exercise_name;
-            const prevEx = prevExercises[name];
-            const hasPrevious = !!(prevEx && prevEx.sets && prevEx.sets.length > 0);
-            const prevNote = prevEx ? prevEx.note : null;
+            const selected = this.selectedFor(name);
+            const prevEx = this.previous[selected];
 
             html += `<div class="exercise-card" data-exercise="${this.escapeAttr(name)}">`;
-            html += `<div class="exercise-name">${this.escapeHtml(name)}</div>`;
+            html += this.renderExerciseSelect(ex, idx);
+            html += `<div class="exercise-cue">${this.escapeHtml(this.cueFor(ex))}</div>`;
             html += `<div class="exercise-target">${ex.target_sets} sets &times; ${this.escapeHtml(ex.target_reps)} reps</div>`;
 
-            // Previous performance (includes note)
-            html += this.renderPreviousPerformance(prevEx, hasPrevious, prevNote, ex.target_sets);
+            // Previous performance for the selected exercise (includes its note)
+            html += `<div class="prev-block">${this.renderPreviousPerformance(prevEx, !!prevEx, prevEx ? prevEx.note : null, ex.target_sets)}</div>`;
 
             // Set input rows based on target_sets (1-10)
             const targetSets = ex.target_sets || 4;
@@ -418,6 +439,95 @@ window.views['workout'] = {
         return html;
     },
 
+    // The exercise chosen for a slot (defaults to the scheduled exercise)
+    selectedFor(slot) {
+        return (this.state.selected && this.state.selected[slot]) || slot;
+    },
+
+    // Cue shown under the exercise name. The scheduled exercise and its
+    // either-or parts use the schedule's cue; any other exercise uses its own
+    // cue from the program, if it has one.
+    cueFor(ex) {
+        const slot = ex.exercise_name;
+        const sel = this.selectedFor(slot);
+        if (sel === slot || (ex.variants || []).includes(sel)) {
+            return ex.cue || '';
+        }
+        return (this.state.cues && this.state.cues[sel]) || '';
+    },
+
+    // Dropdown of exercises for a slot. Either-or exercises list their parts first.
+    renderExerciseSelect(ex, idx) {
+        const slot = ex.exercise_name;
+        const selected = this.selectedFor(slot);
+        const variants = ex.variants || [];
+        const all = (this.state.options && this.state.options.length) ? this.state.options : [slot];
+
+        const option = (n) =>
+            `<option value="${this.escapeAttr(n)}"${n === selected ? ' selected' : ''}>${this.escapeHtml(n)}</option>`;
+
+        let html = `<select class="exercise-select" id="exercise-${idx}" data-slot="${this.escapeAttr(slot)}" aria-label="Exercise ${idx + 1}">`;
+        if (variants.length > 0) {
+            const scheduled = [slot, ...variants];
+            const others = all.filter(n => !scheduled.includes(n));
+            if (!scheduled.includes(selected) && !others.includes(selected)) others.push(selected);
+            html += `<optgroup label="Scheduled options">${scheduled.map(option).join('')}</optgroup>`;
+            html += `<optgroup label="Other exercises">${others.map(option).join('')}</optgroup>`;
+        } else {
+            const names = all.includes(slot) ? [...all] : [slot, ...all];
+            if (!names.includes(selected)) names.push(selected);
+            html += names.map(option).join('');
+        }
+        html += '</select>';
+        return html;
+    },
+
+    // Handle choosing a different exercise for a slot
+    async handleExerciseChange(e) {
+        const select = e.target;
+        const slot = select.dataset.slot;
+        const newName = select.value;
+        const oldName = this.selectedFor(slot);
+        if (newName === oldName) return;
+
+        // Two slots can't use the same exercise: both would save under one name
+        const clash = this.state.exercises.find(
+            other => other.exercise_name !== slot && this.selectedFor(other.exercise_name) === newName
+        );
+        if (clash) {
+            select.value = oldName;
+            this.showErrorBanner(`${newName} is already in this workout. Pick a different exercise.`);
+            return;
+        }
+        this.hideErrorBanner();
+
+        this.state.selected[slot] = newName;
+        this.state.dirty = true;
+        this.scheduleAutoSave();
+
+        const ex = this.state.exercises.find(item => item.exercise_name === slot);
+        const card = select.closest('.exercise-card');
+        const cueEl = card.querySelector('.exercise-cue');
+        if (cueEl) cueEl.textContent = this.cueFor(ex);
+
+        // Show the history of the newly chosen exercise
+        const block = card.querySelector('.prev-block');
+        if (!(newName in this.previous)) {
+            try {
+                const data = await api.getPreviousByExercise([newName]);
+                this.previous[newName] = (data.exercises || {})[newName] || null;
+            } catch (err) {
+                if (this.selectedFor(slot) === newName && block) {
+                    block.innerHTML = '<div class="no-previous">Could not load previous data</div>';
+                }
+                return;
+            }
+        }
+        if (this.selectedFor(slot) !== newName || !block) return;  // changed again while loading
+        const prev = this.previous[newName];
+        block.innerHTML = this.renderPreviousPerformance(prev, !!prev, prev ? prev.note : null, ex.target_sets);
+    },
+
     formatShortDate(isoStr) {
         if (!isoStr) return '';
         try {
@@ -439,6 +549,11 @@ window.views['workout'] = {
             input.addEventListener('blur', (e) => this.handleInputChange(e));
             input.addEventListener('change', (e) => this.handleInputChange(e));
             input.addEventListener('input', (e) => this.handleInputUpdate(e));
+        });
+
+        // Exercise dropdowns
+        container.querySelectorAll('select.exercise-select').forEach(select => {
+            select.addEventListener('change', (e) => this.handleExerciseChange(e));
         });
 
         // Notes textarea
@@ -606,11 +721,12 @@ window.views['workout'] = {
     // A set is "entered" if reps is filled in. Weight is optional (blank → 0).
     getEnteredSets() {
         const sets = [];
-        for (const [exerciseName, setData] of Object.entries(this.state.sets)) {
+        for (const [slot, setData] of Object.entries(this.state.sets)) {
             for (const [setNum, values] of Object.entries(setData)) {
                 if (values.reps !== '') {
                     sets.push({
-                        exercise_name: exerciseName,
+                        // Saved under the exercise chosen in the dropdown so history follows it
+                        exercise_name: this.selectedFor(slot),
                         set_number: parseInt(setNum),
                         weight: values.weight !== '' ? parseFloat(values.weight) : 0,
                         reps: parseInt(values.reps)
@@ -624,9 +740,9 @@ window.views['workout'] = {
     // Utility: get all notes as array for save (used by task 7.2)
     getEnteredNotes() {
         const notes = [];
-        for (const [exerciseName, noteText] of Object.entries(this.state.notes)) {
+        for (const [slot, noteText] of Object.entries(this.state.notes)) {
             notes.push({
-                exercise_name: exerciseName,
+                exercise_name: this.selectedFor(slot),
                 note: noteText
             });
         }
@@ -637,29 +753,67 @@ window.views['workout'] = {
     resetState() {
         this.state.sets = {};
         this.state.notes = {};
+        this.state.selected = {};
         this.state.dirty = false;
     },
 
     // Pre-fill inputs from a previously saved session for this exact week/day
     prefillFromSession(sessionData) {
         const exercises = sessionData.exercises || {};
+        const slotFor = this.matchSessionToSlots(Object.keys(exercises));
+
         for (const [exerciseName, exData] of Object.entries(exercises)) {
-            if (this.state.sets[exerciseName]) {
-                const sets = exData.sets || [];
-                for (const set of sets) {
-                    const setNum = set.set_number;
-                    if (this.state.sets[exerciseName][setNum]) {
-                        this.state.sets[exerciseName][setNum] = {
-                            weight: set.weight !== null && set.weight !== undefined ? String(set.weight) : '',
-                            reps: set.reps !== null && set.reps !== undefined ? String(set.reps) : ''
-                        };
-                    }
+            const slot = slotFor[exerciseName];
+            if (slot === undefined) continue;
+
+            // The session may have been saved with a different exercise than scheduled
+            this.state.selected[slot] = exerciseName;
+
+            const sets = exData.sets || [];
+            for (const set of sets) {
+                const setNum = set.set_number;
+                if (this.state.sets[slot][setNum]) {
+                    this.state.sets[slot][setNum] = {
+                        weight: set.weight !== null && set.weight !== undefined ? String(set.weight) : '',
+                        reps: set.reps !== null && set.reps !== undefined ? String(set.reps) : ''
+                    };
                 }
             }
-            if (this.state.notes.hasOwnProperty(exerciseName) && exData.note) {
-                this.state.notes[exerciseName] = exData.note;
+            if (exData.note) {
+                this.state.notes[slot] = exData.note;
             }
         }
+    },
+
+    // Work out which slot of today's workout each saved exercise belongs to.
+    // 1) same name as the scheduled exercise, 2) one of its either-or parts,
+    // 3) if exactly one saved exercise and one slot are left over, they pair up.
+    // Anything else stays in history but isn't pre-filled (it would be a guess).
+    matchSessionToSlots(sessionNames) {
+        const slots = this.state.exercises;
+        const slotFor = {};
+        const usedSlots = new Set();
+
+        sessionNames.forEach(name => {
+            if (this.state.sets[name] && !usedSlots.has(name)) {
+                slotFor[name] = name;
+                usedSlots.add(name);
+            }
+        });
+        sessionNames.forEach(name => {
+            if (slotFor[name] !== undefined) return;
+            const slot = slots.find(ex => !usedSlots.has(ex.exercise_name) && (ex.variants || []).includes(name));
+            if (slot) {
+                slotFor[name] = slot.exercise_name;
+                usedSlots.add(slot.exercise_name);
+            }
+        });
+        const leftoverNames = sessionNames.filter(name => slotFor[name] === undefined);
+        const leftoverSlots = slots.filter(ex => !usedSlots.has(ex.exercise_name));
+        if (leftoverNames.length === 1 && leftoverSlots.length === 1) {
+            slotFor[leftoverNames[0]] = leftoverSlots[0].exercise_name;
+        }
+        return slotFor;
     },
 
     // Restore saved in-progress state from backend
@@ -676,6 +830,13 @@ window.views['workout'] = {
                             };
                         }
                     }
+                }
+            }
+        }
+        if (savedValue.selected && typeof savedValue.selected === 'object') {
+            for (const [slot, chosen] of Object.entries(savedValue.selected)) {
+                if (this.state.sets[slot] && typeof chosen === 'string' && chosen) {
+                    this.state.selected[slot] = chosen;
                 }
             }
         }
@@ -708,7 +869,8 @@ window.views['workout'] = {
                 week: parseInt(this.state.week),
                 day: parseInt(this.state.day),
                 sets: this.state.sets,
-                notes: this.state.notes
+                notes: this.state.notes,
+                selected: this.state.selected
             }
         };
 

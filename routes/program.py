@@ -5,6 +5,7 @@ from flask import Blueprint, request, jsonify
 
 from database import get_db
 from csv_parser import parse_csv
+from exercise_variants import build_options, split_variants
 
 program_bp = Blueprint('program', __name__)
 
@@ -52,10 +53,10 @@ def upload_program():
         # Insert new exercises with sort_order
         for sort_order, exercise in enumerate(result.exercises, start=1):
             db.execute(
-                '''INSERT INTO exercises (week, day, exercise_name, target_sets, target_reps, sort_order)
-                   VALUES (?, ?, ?, ?, ?, ?)''',
+                '''INSERT INTO exercises (week, day, exercise_name, target_sets, target_reps, sort_order, cue)
+                   VALUES (?, ?, ?, ?, ?, ?, ?)''',
                 (exercise.week, exercise.day, exercise.exercise_name,
-                 exercise.sets, exercise.target_reps, sort_order)
+                 exercise.sets, exercise.target_reps, sort_order, exercise.cue)
             )
 
         # Update days_per_week in app_state
@@ -124,10 +125,19 @@ def get_days(week):
 
 @program_bp.route('/api/program/weeks/<int:week>/days/<int:day>', methods=['GET'])
 def get_exercises(week, day):
-    """Return exercises for a specific week/day with name, target_sets, target_reps."""
+    """Return exercises for a specific week/day.
+
+    Each exercise has name, target_sets, target_reps, cue (the program's
+    Notes text) and variants (the individual exercises of an either-or name,
+    empty otherwise).
+
+    Also returns 'options' (every exercise in the program, plus the parts of
+    either-or names, for the exercise dropdown) and 'cues' (exercise name to
+    cue, for exercises chosen from the dropdown instead of the scheduled one).
+    """
     db = get_db()
     rows = db.execute(
-        '''SELECT exercise_name, target_sets, target_reps
+        '''SELECT exercise_name, target_sets, target_reps, cue
            FROM exercises
            WHERE week = ? AND day = ?
            ORDER BY sort_order''',
@@ -139,11 +149,29 @@ def get_exercises(week, day):
             'exercise_name': row['exercise_name'],
             'target_sets': row['target_sets'],
             'target_reps': row['target_reps'],
+            'cue': row['cue'] or '',
+            'variants': split_variants(row['exercise_name']),
         }
         for row in rows
     ]
 
-    return jsonify({'week': week, 'day': day, 'exercises': exercises}), 200
+    # Options and cues come from the whole program, not just this day
+    all_rows = db.execute(
+        'SELECT exercise_name, cue FROM exercises ORDER BY sort_order'
+    ).fetchall()
+    options = build_options([r['exercise_name'] for r in all_rows])
+    cues = {}
+    for r in all_rows:
+        if r['cue'] and r['exercise_name'] not in cues:
+            cues[r['exercise_name']] = r['cue']
+
+    return jsonify({
+        'week': week,
+        'day': day,
+        'exercises': exercises,
+        'options': options,
+        'cues': cues,
+    }), 200
 
 
 @program_bp.route('/api/program/current-week', methods=['GET'])

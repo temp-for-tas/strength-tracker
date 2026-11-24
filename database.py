@@ -78,6 +78,21 @@ def init_db():
     # (weight >= 0.5 instead of weight >= 0, reps >= 1 instead of reps >= 0)
     _migrate_set_entries(db)
 
+    # Add the optional cue column to databases created before it existed
+    _migrate_exercises_cue(db)
+
+
+def _migrate_exercises_cue(db):
+    """Add exercises.cue (text from the CSV 'Notes' column) if it is missing.
+
+    ALTER TABLE ADD COLUMN keeps every existing row, so loaded programs and
+    all workout history are untouched.
+    """
+    columns = [row[1] for row in db.execute('PRAGMA table_info(exercises)').fetchall()]
+    if 'cue' not in columns:
+        db.execute("ALTER TABLE exercises ADD COLUMN cue TEXT NOT NULL DEFAULT ''")
+        db.commit()
+
 
 def _migrate_set_entries(db):
     """Migrate set_entries table to allow weight=0 and reps=0.
