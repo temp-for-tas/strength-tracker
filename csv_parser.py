@@ -17,6 +17,7 @@ class ParsedExercise:
     exercise_name: str
     sets: int
     target_reps: str
+    cue: str = ""  # Optional coaching cue from the "Notes" column
 
 
 @dataclass
@@ -29,6 +30,10 @@ class ParseResult:
 
 
 REQUIRED_HEADERS = ["Week", "Day", "Exercise", "Sets", "Target Reps"]
+
+# Optional column holding a short cue shown under the exercise name
+OPTIONAL_NOTES_HEADER = "Notes"
+MAX_CUE_LENGTH = 500
 
 
 def parse_csv(file_content: str) -> ParseResult:
@@ -76,6 +81,7 @@ def parse_csv(file_content: str) -> ParseResult:
     exercise_idx = header.index("Exercise")
     sets_idx = header.index("Sets")
     reps_idx = header.index("Target Reps")
+    notes_idx = header.index(OPTIONAL_NOTES_HEADER) if OPTIONAL_NOTES_HEADER in header else None
 
     # Parse data rows
     for row_num, row in enumerate(reader, start=2):  # Header is row 1
@@ -173,6 +179,16 @@ def parse_csv(file_content: str) -> ParseResult:
             )
             row_has_error = True
 
+        # Optional Notes: blank or missing cell means no cue, max 500 chars
+        cue_str = ""
+        if notes_idx is not None and notes_idx < len(row):
+            cue_str = row[notes_idx].strip()
+            if len(cue_str) > MAX_CUE_LENGTH:
+                errors.append(
+                    f"Row {row_num}: 'Notes' must be {MAX_CUE_LENGTH} characters or fewer"
+                )
+                row_has_error = True
+
         # If row is valid, add to exercises list
         if not row_has_error:
             exercises.append(ParsedExercise(
@@ -181,6 +197,7 @@ def parse_csv(file_content: str) -> ParseResult:
                 exercise_name=exercise_str,
                 sets=sets,
                 target_reps=reps_str,
+                cue=cue_str,
             ))
 
     # If there are row-level errors, return failure

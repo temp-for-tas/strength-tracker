@@ -1,4 +1,4 @@
-const CACHE_NAME = 'strength-tracker-v2';
+const CACHE_NAME = 'strength-tracker-v3';
 
 const ASSETS_TO_CACHE = [
   '/',
