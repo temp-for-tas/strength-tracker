@@ -18,8 +18,9 @@ const api = {
     getPreviousSession: (week, day) => fetch(`/api/sessions/previous/${week}/${day}`).then(r => r.json()),
 
     getPreviousByExercise: (exerciseNames) => {
-        const params = encodeURIComponent(exerciseNames.join(','));
-        return fetch(`/api/sessions/previous-by-exercise?exercises=${params}`).then(r => r.json());
+        // One 'name' parameter per exercise, so names containing commas stay intact
+        const params = exerciseNames.map(n => `name=${encodeURIComponent(n)}`).join('&');
+        return fetch(`/api/sessions/previous-by-exercise?${params}`).then(r => r.json());
     },
 
     getExactSession: (week, day) => fetch(`/api/sessions/exact/${week}/${day}`).then(r => r.json()),

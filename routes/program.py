@@ -159,7 +159,19 @@ def get_exercises(week, day):
     all_rows = db.execute(
         'SELECT exercise_name, cue FROM exercises ORDER BY sort_order'
     ).fetchall()
-    options = build_options([r['exercise_name'] for r in all_rows])
+
+    # Exercises already used in saved workouts (including ones typed in as
+    # "other") are offered too. A note-only entry counts only if it has text,
+    # because every scheduled exercise gets a blank note row on save.
+    history_rows = db.execute(
+        '''SELECT exercise_name FROM set_entries
+           UNION
+           SELECT exercise_name FROM notes
+           WHERE length(note_text) > 0'''
+    ).fetchall()
+    options = build_options(
+        [r['exercise_name'] for r in all_rows] + [r['exercise_name'] for r in history_rows]
+    )
     cues = {}
     for r in all_rows:
         if r['cue'] and r['exercise_name'] not in cues:

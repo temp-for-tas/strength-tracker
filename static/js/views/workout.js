@@ -478,15 +478,98 @@ window.views['workout'] = {
             if (!names.includes(selected)) names.push(selected);
             html += names.map(option).join('');
         }
+        html += `<option value="${this.CUSTOM_VALUE}">Other (type your own)...</option>`;
         html += '</select>';
+        html += `<input type="text" class="custom-exercise-input hidden" maxlength="100"
+            data-slot="${this.escapeAttr(slot)}" placeholder="Type the exercise name"
+            aria-label="Custom exercise name for exercise ${idx + 1}">`;
         return html;
+    },
+
+    // Value of the dropdown entry that lets you type an exercise that isn't listed
+    CUSTOM_VALUE: '__custom__',
+
+    // Collapse whitespace and match the spelling of an exercise that already
+    // exists (ignoring capitalization), so "bench press" can't split history
+    // away from "Bench Press".
+    canonicalExerciseName(raw) {
+        const name = String(raw || '').replace(/\s+/g, ' ').trim();
+        if (!name) return '';
+        const known = new Set(this.state.options || []);
+        this.state.exercises.forEach(ex => {
+            known.add(ex.exercise_name);
+            known.add(this.selectedFor(ex.exercise_name));
+        });
+        const lowered = name.toLowerCase();
+        for (const existing of known) {
+            if (existing.toLowerCase() === lowered) return existing;
+        }
+        return name;
+    },
+
+    // Make sure the dropdown has an entry for this exercise (before the "Other" entry)
+    ensureOption(select, name) {
+        const exists = Array.from(select.options || []).some(o => o.value === name);
+        if (exists) return;
+        const opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = name;
+        const custom = Array.from(select.options || []).find(o => o.value === this.CUSTOM_VALUE);
+        select.insertBefore(opt, custom || null);
+    },
+
+    // The user picked "Other": show the text box
+    showCustomInput(card) {
+        const input = card.querySelector('.custom-exercise-input');
+        if (!input) return;
+        input.classList.remove('hidden');
+        input.value = '';
+        input.focus();
+    },
+
+    hideCustomInput(card) {
+        const input = card.querySelector('.custom-exercise-input');
+        if (!input) return;
+        input.value = '';
+        input.classList.add('hidden');
+    },
+
+    // The user finished typing a custom exercise name (left the box or pressed Enter)
+    async handleCustomExerciseCommit(e) {
+        const input = e.target;
+        const slot = input.dataset.slot;
+        const card = input.closest('.exercise-card');
+        const select = card.querySelector('select.exercise-select');
+        const name = this.canonicalExerciseName(input.value);
+        this.hideCustomInput(card);
+
+        if (!name) {
+            // Nothing typed: go back to the exercise that was selected
+            select.value = this.selectedFor(slot);
+            return;
+        }
+        this.ensureOption(select, name);
+        select.value = name;
+        await this.selectExercise(slot, name, card, select);
     },
 
     // Handle choosing a different exercise for a slot
     async handleExerciseChange(e) {
         const select = e.target;
         const slot = select.dataset.slot;
-        const newName = select.value;
+        const card = select.closest('.exercise-card');
+
+        if (select.value === this.CUSTOM_VALUE) {
+            this.showCustomInput(card);
+            return;
+        }
+        this.hideCustomInput(card);
+        await this.selectExercise(slot, select.value, card, select);
+    },
+
+    // Make newName the exercise for a slot: check for duplicates, remember the
+    // choice, and show that exercise's cue and history.
+    async selectExercise(slot, newName, card, select) {
         const oldName = this.selectedFor(slot);
         if (newName === oldName) return;
 
@@ -506,7 +589,6 @@ window.views['workout'] = {
         this.scheduleAutoSave();
 
         const ex = this.state.exercises.find(item => item.exercise_name === slot);
-        const card = select.closest('.exercise-card');
         const cueEl = card.querySelector('.exercise-cue');
         if (cueEl) cueEl.textContent = this.cueFor(ex);
 
@@ -554,6 +636,15 @@ window.views['workout'] = {
         // Exercise dropdowns
         container.querySelectorAll('select.exercise-select').forEach(select => {
             select.addEventListener('change', (e) => this.handleExerciseChange(e));
+        });
+        container.querySelectorAll('input.custom-exercise-input').forEach(input => {
+            input.addEventListener('blur', (e) => this.handleCustomExerciseCommit(e));
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    input.blur();  // commits via the blur handler
+                }
+            });
         });
 
         // Notes textarea
