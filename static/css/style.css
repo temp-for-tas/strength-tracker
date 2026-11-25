@@ -281,6 +281,21 @@ h3 {
     text-overflow: ellipsis;
 }
 
+.custom-exercise-input {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    font-size: 16px;
+    border: 1px solid #1a73e8;
+    border-radius: 6px;
+    padding: 8px 10px;
+    margin-bottom: 4px;
+}
+
+.custom-exercise-input.hidden {
+    display: none;
+}
+
 .exercise-cue {
     font-size: 13px;
     font-style: italic;

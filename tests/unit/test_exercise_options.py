@@ -208,3 +208,88 @@ class TestCueMigration:
             assert row['cue'] == ''
             init_db()  # running again must be harmless
             assert db.execute('SELECT COUNT(*) FROM exercises').fetchone()[0] == 1
+
+
+# --- Exercises typed in as "other" -------------------------------------------
+
+def save_session(client, name, note='', week=1, day=1):
+    return client.post('/api/sessions', json={
+        'week': week, 'day': day,
+        'sets': [{'exercise_name': name, 'set_number': 1, 'weight': 20, 'reps': 10}],
+        'notes': [{'exercise_name': name, 'note': note}],
+    })
+
+
+class TestCustomExercisesJoinTheOptions:
+    def test_saved_custom_exercise_is_offered_on_every_day(self, client):
+        upload(client, PROGRAM)
+        assert 'Cable Fly' not in client.get('/api/program/weeks/1/days/1').get_json()['options']
+
+        assert save_session(client, 'Cable Fly').status_code == 201
+
+        for week, day in [(1, 1), (1, 2), (2, 2)]:
+            options = client.get(f'/api/program/weeks/{week}/days/{day}').get_json()['options']
+            assert 'Cable Fly' in options
+
+    def test_options_stay_sorted_and_without_duplicates(self, client):
+        upload(client, PROGRAM)
+        save_session(client, 'Chest Press')  # already in the program
+        save_session(client, 'Cable Fly', week=1, day=2)
+        options = client.get('/api/program/weeks/1/days/1').get_json()['options']
+        assert options.count('Chest Press') == 1
+        assert options == sorted(options, key=lambda n: (n.lower(), n))
+
+    def test_either_or_name_saved_in_history_also_offers_its_parts(self, client):
+        upload(client, f"{HEADER}\n1,1,Row Machine,3,8-12\n")
+        save_session(client, 'Leg Press or Hack Squats')
+        options = client.get('/api/program/weeks/1/days/1').get_json()['options']
+        assert {'Leg Press or Hack Squats', 'Leg Press', 'Hack Squats'} <= set(options)
+
+    def test_blank_note_alone_does_not_add_an_option(self, client):
+        upload(client, PROGRAM)
+        # Notes with no sets and no text are written for every slot on save
+        client.post('/api/sessions', json={
+            'week': 1, 'day': 1, 'sets': [],
+            'notes': [{'exercise_name': 'Ghost Exercise', 'note': ''}],
+        })
+        options = client.get('/api/program/weeks/1/days/1').get_json()['options']
+        assert 'Ghost Exercise' not in options
+
+    def test_note_with_text_and_no_sets_does_add_an_option(self, client):
+        upload(client, PROGRAM)
+        client.post('/api/sessions', json={
+            'week': 1, 'day': 1, 'sets': [],
+            'notes': [{'exercise_name': 'Stretching', 'note': '10 minutes'}],
+        })
+        options = client.get('/api/program/weeks/1/days/1').get_json()['options']
+        assert 'Stretching' in options
+
+    def test_options_survive_uploading_a_new_program(self, client):
+        upload(client, PROGRAM)
+        save_session(client, 'Cable Fly')
+        upload(client, f"{HEADER}\n1,1,Squat,3,5\n")
+        options = client.get('/api/program/weeks/1/days/1').get_json()['options']
+        assert 'Cable Fly' in options and 'Squat' in options
+
+
+class TestHistoryLookupParameters:
+    def test_name_with_a_comma_is_looked_up_as_one_exercise(self, client):
+        upload(client, PROGRAM)
+        save_session(client, 'Dips, weighted', note='chest forward')
+        resp = client.get('/api/sessions/previous-by-exercise', query_string={'name': 'Dips, weighted'})
+        exercises = resp.get_json()['exercises']
+        assert list(exercises) == ['Dips, weighted']
+        assert exercises['Dips, weighted']['note'] == 'chest forward'
+
+    def test_repeated_name_parameters_look_up_each_exercise(self, client):
+        upload(client, PROGRAM)
+        save_session(client, 'Cable Fly')
+        save_session(client, 'Chest Press', week=1, day=2)
+        resp = client.get('/api/sessions/previous-by-exercise?name=Cable Fly&name=Chest Press&name=Unknown')
+        assert set(resp.get_json()['exercises']) == {'Cable Fly', 'Chest Press'}
+
+    def test_legacy_comma_separated_parameter_still_works(self, client):
+        upload(client, PROGRAM)
+        save_session(client, 'Cable Fly')
+        resp = client.get('/api/sessions/previous-by-exercise?exercises=Cable Fly,Unknown')
+        assert set(resp.get_json()['exercises']) == {'Cable Fly'}

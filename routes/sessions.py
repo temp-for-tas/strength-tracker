@@ -369,16 +369,18 @@ def get_previous_by_exercise():
     programs where exercises appear on different days across weeks.
 
     Query params:
-        exercises: comma-separated list of exercise names
+        name: exercise name, repeated once per exercise (preferred)
+        exercises: comma-separated list of exercise names (legacy)
 
     Returns a dict keyed by exercise_name, each with sets, note,
     completed_at, week, and day from the session it came from.
     """
-    exercises_param = request.args.get('exercises', '')
-    if not exercises_param:
-        return jsonify({'exercises': {}}), 200
-
-    exercise_names = [name.strip() for name in exercises_param.split(',') if name.strip()]
+    # Preferred: one 'name' parameter per exercise (names may contain commas).
+    # Legacy: a single comma-separated 'exercises' parameter.
+    exercise_names = [n.strip() for n in request.args.getlist('name') if n.strip()]
+    if not exercise_names:
+        exercises_param = request.args.get('exercises', '')
+        exercise_names = [n.strip() for n in exercises_param.split(',') if n.strip()]
     if not exercise_names:
         return jsonify({'exercises': {}}), 200
 
